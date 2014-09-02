@@ -3,4 +3,6 @@ data-mining-is-fun
 
 my repo for CS591 - Data Mining
 
-projects,homework,etc.
+- [ Course homepage ]( http://cs.unm.edu/~mueen/Teaching/CS591/ )
+
+- [ Course Lectures ]( http://cs.unm.edu/~mueen/Teaching/CS591/Lectures/ )
