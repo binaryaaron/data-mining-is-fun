@@ -45,13 +45,157 @@ breaklinks=false,pdfborder={0 0 1},backref=false,colorlinks=false]
 
 given the following vectors:
 
-\begin{equation}
-x = \{1, 3, 5, 7, 6, 8, 5, 2\}  \\
-y = \{7, 11, 9, 6, 4, 3, 1, 3\}  \\
-z = \{3, 5, 7, 9, 8, 7, 6, 5\}  \\
-\end{equation}
+\begin{align}
+	x = \{1, 3, 5, 7, 6, 8, 5, 2\}  \\
+	y = \{7, 11, 9, 6, 4, 3, 1, 3\}  \\
+	z = \{3, 5, 7, 9, 8, 7, 6, 5\}  
+\end{align}
 
 \section{wavelet transform each vector}
+
+An un-normalized 8-point Haar matrix \[H_8\] is shown below
+
+\[ H_{8} =  
+\begin{bmatrix} 
+	1&1&1&1&1&1&1&1 \\ 
+	1&1&1&1&-1&-1&-1&-1 \\
+	1&1&-1&-1&0&0&0&0& \\ 
+	0&0&0&0&1&1&-1&-1 \\ 
+	1&-1&0&0&0&0&0&0& \\
+	0&0&1&-1&0&0&0&0 \\ 
+	0&0&0&0&1&-1&0&0& \\ 
+	0&0&0&0&0&0&1&-1 
+\end{bmatrix}
+\]
+and will be used to multiply each vector.
+
+\subsection{vector x}
+
+\[ 
+	\begin{bmatrix}
+		1 \\
+		3 \\
+		5 \\
+		7 \\
+		6 \\
+		8 \\
+		5 \\
+		2 
+	\end{bmatrix}
+		*  
+\begin{bmatrix} 
+	1&1&1&1&1&1&1&1 \\ 
+	1&1&1&1&-1&-1&-1&-1 \\
+	1&1&-1&-1&0&0&0&0& \\ 
+	0&0&0&0&1&1&-1&-1 \\ 
+	1&-1&0&0&0&0&0&0& \\
+	0&0&1&-1&0&0&0&0 \\ 
+	0&0&0&0&1&-1&0&0& \\ 
+	0&0&0&0&0&0&1&-1 
+\end{bmatrix}
+=
+\begin{bmatrix}
+	1 + 3 + 5  + 7 + 6 + 8 + 5 + 2 \\
+	1 + 3  + 5 + 7 - 6 - 8 -5 -2 \\
+	1 + 3 + 5 + 7 \\
+	6+ 8 -5 -2 \\
+	1-3 \\
+	5-7 \\
+	6-8 \\
+	5-2
+\end{bmatrix}
+\]
+\[
+	= \{ 37, -4, -8, 7, -2, -2, -2, 3 \}
+\]
+
+
+
+
+
+\subsection{vector y}
+
+\[ 
+	\begin{bmatrix}
+		7 \\
+		11 \\
+		9 \\
+		6 \\
+		4 \\
+		3 \\
+		1 \\
+		3 
+	\end{bmatrix}
+		*  
+\begin{bmatrix} 
+	1&1&1&1&1&1&1&1 \\ 
+	1&1&1&1&-1&-1&-1&-1 \\
+	1&1&-1&-1&0&0&0&0& \\ 
+	0&0&0&0&1&1&-1&-1 \\ 
+	1&-1&0&0&0&0&0&0& \\
+	0&0&1&-1&0&0&0&0 \\ 
+	0&0&0&0&1&-1&0&0& \\ 
+	0&0&0&0&0&0&1&-1 
+\end{bmatrix}
+=
+\begin{bmatrix}
+	7+11+9+6+4+3+1+3 \\
+	7+11+9+6 -4 -3 -1 -3 \\
+	7+11 -9-6 \\
+	4+3 -1 -3 \\
+	7-11 \\
+	9-6 \\
+	4-3 \\
+	1-3
+
+\end{bmatrix}
+\]
+\[
+	= \{ 44, 22, 3, 3, -4, 3, 1, -2 \}
+\]
+
+
+
+\subsection{vector z}
+
+
+\[ 
+	\begin{bmatrix}
+		1 \\
+		3 \\
+		5 \\
+		7 \\
+		6 \\
+		8 \\
+		5 \\
+		2 
+	\end{bmatrix}
+		*  
+\begin{bmatrix} 
+	1&1&1&1&1&1&1&1 \\ 
+	1&1&1&1&-1&-1&-1&-1 \\
+	1&1&-1&-1&0&0&0&0& \\ 
+	0&0&0&0&1&1&-1&-1 \\ 
+	1&-1&0&0&0&0&0&0& \\
+	0&0&1&-1&0&0&0&0 \\ 
+	0&0&0&0&1&-1&0&0& \\ 
+	0&0&0&0&0&0&1&-1 
+\end{bmatrix}
+=
+\begin{bmatrix}
+	3 + 5 + 7 + 9 + 8 + 7 + 6 + 5 \\
+	3 + 5 + 7 + 9 + -9 + -7 + -6 + -5 \\
+	3 + 3 + -7 + -9 \\
+	8 + 7 + -6 + -5 \\
+	3 + -5 \\
+	7 + -9 \\
+	8 + -7 \\
+	6 + -5
+\end{bmatrix}
+\]
+\[
+	= \{ 50, -2, -8, 4, -2, -2, 1, 1 \}
+\]
 
 
 
@@ -73,6 +217,33 @@ z = \{3, 5, 7, 9, 8, 7, 6, 5\}  \\
 
 \subsection{which one of the above approximations matches the ordering of the distances from 
 the raw vectors?}
+
+
+
+
+
+
+The transformation \[W\] of size \[N\times N \] can be defined
+as 
+\[W = \left(\frac{\omega^{jk}}{\sqrt{N}}\right)_{j,k=0,\ldots,N-1} \]
+, or equivalently:
+
+\[ W = \frac{1}{\sqrt{N}}  
+\begin{bmatrix}
+	1&1&1&1&\cdots &1 \\
+	1&\omega&\omega^2&\omega^3&\cdots&\omega^{N-1} \\
+	1&\omega^2&\omega^4&\omega^6&\cdots&\omega^{2(N-1)}\\
+	1&\omega^3&\omega^6&\omega^9&\cdots&\omega^{3(N-1)}\\
+	\vdots&\vdots&\vdots&\vdots&\ddots&\vdots\\
+	1&\omega^{N-1}&\omega^{2(N-1)}&\omega^{3(N-1)}&\cdots&\omega^{(N-1)(N-1)}\\
+\end{bmatrix}
+\]
+\[ \omega = e^{-\frac{2\pi i}{N}} \] 
+
+
+
+
+
 
 
 \end{document}
