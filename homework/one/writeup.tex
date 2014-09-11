@@ -489,7 +489,46 @@ the $8 \times 8$ matrix as follows:
 
 \section{minkowski distance}
 
+The Minkowski distance of order $p$ between two points
+
+ \[ P =(x_1,x_2,\ldots,x_n)\text{ and }Q=(y_1,y_2,\ldots,y_n) \in \mathbb{R}^n
+ \]
+
+is defined as:
+
+\[ \left(\sum_{i=1}^n |x_i-y_i|^p\right)^{1/p} \]
+(Wikipedia)
+
+and can be written as:
+\[d(i,j) = \sqrt[h]{|x_{i1} - x_{j1}|^h +  |x_{i2} - x_{j2}|^h + \dots + | x_{ip} - x_{jp}|^h } \] 
+
+where $i = \{x_{i1}, x_{i_2}, \ldots, x_{ip} \}$ and  $j = \{x_{j1}, x_{j_2},
+\ldots, x_{jp} \} $ are two $p$-dimensional data objects and $h$ is the order
+(from class slides). 
+	
+
 \subsection{raw vectors}
+Between x and y:
+\[ x = \{1, 3, 5, 7, 6, 8, 5, 2\}  \] \\
+\[ 	y = \{7, 11, 9, 6, 4, 3, 1, 3\}  \] \\
+
+\[ \sqrt{ | 1-7 |^2 + |3 -11|^2 + |5-9|^2 + 
+  |7-6|^2 + |6-4|^2 + |8-3|^2 + |5-1|^2 + |2-3|^2} \]
+  \[ = \sqrt{163} \]
+  \[ \approx 12.767 \]
+
+
+
+
+
+
+  \[ 
+	\begin{pmatrix}
+	  1& 3& 5& 7& 6& 8& 5& 2 \\
+	  7& 11& 9& 6& 4& 3& 1& 3  \\
+	  3& 5& 7& 9& 8& 7& 6& 5 
+	\end{pmatrix}
+  \]
 
 
 \subsection{wavlet coeff.}
@@ -509,10 +548,6 @@ the raw vectors?}
 
 
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 0f7f9fa469956ca38eb85646cad1cbcc6311cbee
 
 
 
