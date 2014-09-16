@@ -13,3 +13,4 @@ wavelet space transform is \( O(n) \)
 
 ## week four
 
+	be able to build a decision tree based on gini index
