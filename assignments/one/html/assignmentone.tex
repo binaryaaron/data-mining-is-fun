@@ -1,0 +1,45 @@
+
+% This LaTeX was auto-generated from MATLAB code.
+% To make changes, update the MATLAB code and republish this document.
+
+\documentclass{article}
+\usepackage{graphicx}
+\usepackage{color}
+
+\sloppy
+\definecolor{lightgray}{gray}{0.5}
+\setlength{\parindent}{0pt}
+
+\begin{document}
+
+    
+    
+\section*{CS591 - Data Mining Assignment One}
+
+\begin{par}
+Aaron Gonzales
+\end{par} \vspace{1em}
+\begin{par}
+do the following stuff!
+\end{par} \vspace{1em}
+\begin{verbatim}
+   A=dlmread('~/Desktop/data.txt');
+%for i = 1:1000
+ %   A(:,i) = zNorm(A(:,i));
+end
+C = (A' * A);
+[V,D] = eig(C);
+V(:,999);
+A*V(:,999);
+plot(A*V(:,999), A*V(:,1000),'*')
+\end{verbatim}
+\begin{par}
+
+\includegraphics [width=4in]{FILENAME.PNG}
+
+\end{par} \vspace{1em}
+
+
+
+\end{document}
+    
