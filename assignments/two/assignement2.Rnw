@@ -1,0 +1,138 @@
+%%%%%latex preamble%%%%%
+
+\documentclass[titlepage]{article}
+\usepackage[sc]{mathpazo}
+\usepackage{amsmath, amsthm, amssymb}
+\usepackage{graphicx}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\geometry{verbose,tmargin=2.5cm,bmargin=2.5cm,lmargin=1cm,rmargin=1cm}
+\setcounter{secnumdepth}{2}
+\setcounter{tocdepth}{2}
+\usepackage{url}
+\usepackage[unicode=true,pdfusetitle,
+ bookmarks=true,bookmarksnumbered=true,bookmarksopen=true,bookmarksopenlevel=2,
+ breaklinks=false,pdfborder={0 0 1},backref=false,colorlinks=false]
+ {hyperref}
+\hypersetup{pdfstartview={XYZ null null 1}}
+\usepackage{float}
+\usepackage{bm}
+\usepackage{tikz}
+ %changes default sectioning commands
+%\usepackage{breakurl}
+\renewcommand{\thesubsection}{(\alph{subsection})}
+\renewcommand{\thesubsubsection}{\roman{subsection}.}
+\usepackage{lastpage}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\lhead{}
+\chead{\leftmark}
+\rhead{}
+\lfoot{Aaron Gonzales; Data Mining}
+\cfoot{Homework 13}
+\rfoot{Page \thepage\ of \pageref{LastPage}}
+
+\begin{document}
+
+\title{Data Mining: Assignment Two}
+\author{Aaron Gonzales}
+\maketitle
+
+%%%%%%%%knitr option%%%%%%%
+<<setup, include=FALSE, cache=FALSE>>=
+library(knitr)
+# set global chunk options
+opts_chunk$set(fig.path='figure/minimal-', fig.align='center',cache=FALSE, fig.show='hold', fig.width=10, fig.height=10, out.width='.45\\linewidth')
+options(replace.assign=TRUE,width=90)
+library(ggplot2)
+theme_set(theme_bw())
+@
+
+
+
+\section{Neural Network}
+
+Reading the data, optimizing for speed:
+<<readdata, cache=TRUE>>=
+tab5rows <- read.table("~/Dropbox/cs/datamining/data-mining-is-fun/assignments/two/data.txt", header = FALSE, nrows = 5)
+classes <- sapply(tab5rows, class)
+data <- read.table("~/Dropbox/cs/datamining/data-mining-is-fun/assignments/two/data.txt", header = FALSE, colClasses = classes, nrows = 11000, comment.char="")
+@
+
+\subsection {}
+
+Using the nnet package and a small function to tabulate our predictions.
+<<Functions>>=
+library(nnet)
+nrow(data)
+#Define class 'labels' for our set.
+targets <- class.ind(c(rep('0', 5000), rep('1',5000)))
+#test_data <- smalldata[sample(nrow(smalldata), 5000),]
+test.cl <- function(true, pred) {
+    actual <- max.col(true) - 1
+    predicted <- max.col(pred) - 1
+    table(actual, predicted)
+
+}
+@
+
+
+<<testSmallNN, cache=TRUE>>=
+smalldata <- subset(data, select = c(V1,V2, V3, V4))
+targets <- class.ind(c(rep('0', 5000), rep('1',5000)))
+#test_data <- smalldata[sample(nrow(smalldata), 5000),]
+accuracy_rate <- NULL
+for (i in 1:2) {
+  train <- c(sample(1:5000, 450), sample(5000:10000,450))
+  neural_net <- nnet(smalldata[train,], targets[train,], size=10, rang = 0.1, maxit =200, MaxNWts = 26000)
+  a <- test.cl(targets[-train,], predict(neural_net, smalldata[-train,]))
+  print(a)
+  # error rate
+  accuracy_rate[i] = 1-(a[1,2]+a[2,1]) / (a[1,1]+a[2,2])
+  print("finished run ")
+}
+accuracy_rate
+mean(accuracy_rate)
+
+@
+
+
+
+<<fullNN1, cache=TRUE, eval=TRUE>>=
+# Vector for accuracy rate on each run
+accuracy_rate <- NULL
+# train the network 10 times on 90 percent of each sample
+for (i in 1:10) {
+  # train is made from sampling at random from each half of the
+  # data
+  train <- c(sample(1:5000, 4500), sample(5000:10000,4500))
+  neural_net <- nnet(data[train,], targets[train,],
+                     size=10,
+                     rang = 0.1,
+                     maxit =100,
+                     MaxNWts = 26000)
+  # hold values in table and print them
+  # tests prediction with the non-sampled remnants of the data
+  a <- test.cl(targets[-train,], predict(neural_net, data[-train,]))
+  print(a)
+  # error rate
+  accuracy_rate[i] = 1-(a[1,2]+a[2,1]) / (a[1,1]+a[2,2])
+  print("finished run ")
+}
+# prints vector of rates
+accuracy_rate
+# mean of the accuracy rate
+mean(accuracy_rate)
+@
+
+Neural network...
+
+
+<<pca2>>=
+
+@
+
+
+
+
+\end{document}

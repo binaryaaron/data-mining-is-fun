@@ -1,0 +1,415 @@
+%%%%%latex preamble%%%%%
+
+\documentclass[titlepage]{article}\usepackage[]{graphicx}\usepackage[]{color}
+%% maxwidth is the original width if it is less than linewidth
+%% otherwise use linewidth (to make sure the graphics do not exceed the margin)
+\makeatletter
+\def\maxwidth{ %
+  \ifdim\Gin@nat@width>\linewidth
+    \linewidth
+  \else
+    \Gin@nat@width
+  \fi
+}
+\makeatother
+
+\definecolor{fgcolor}{rgb}{0.345, 0.345, 0.345}
+\newcommand{\hlnum}[1]{\textcolor[rgb]{0.686,0.059,0.569}{#1}}%
+\newcommand{\hlstr}[1]{\textcolor[rgb]{0.192,0.494,0.8}{#1}}%
+\newcommand{\hlcom}[1]{\textcolor[rgb]{0.678,0.584,0.686}{\textit{#1}}}%
+\newcommand{\hlopt}[1]{\textcolor[rgb]{0,0,0}{#1}}%
+\newcommand{\hlstd}[1]{\textcolor[rgb]{0.345,0.345,0.345}{#1}}%
+\newcommand{\hlkwa}[1]{\textcolor[rgb]{0.161,0.373,0.58}{\textbf{#1}}}%
+\newcommand{\hlkwb}[1]{\textcolor[rgb]{0.69,0.353,0.396}{#1}}%
+\newcommand{\hlkwc}[1]{\textcolor[rgb]{0.333,0.667,0.333}{#1}}%
+\newcommand{\hlkwd}[1]{\textcolor[rgb]{0.737,0.353,0.396}{\textbf{#1}}}%
+
+\usepackage{framed}
+\makeatletter
+\newenvironment{kframe}{%
+ \def\at@end@of@kframe{}%
+ \ifinner\ifhmode%
+  \def\at@end@of@kframe{\end{minipage}}%
+  \begin{minipage}{\columnwidth}%
+ \fi\fi%
+ \def\FrameCommand##1{\hskip\@totalleftmargin \hskip-\fboxsep
+ \colorbox{shadecolor}{##1}\hskip-\fboxsep
+     % There is no \\@totalrightmargin, so:
+     \hskip-\linewidth \hskip-\@totalleftmargin \hskip\columnwidth}%
+ \MakeFramed {\advance\hsize-\width
+   \@totalleftmargin\z@ \linewidth\hsize
+   \@setminipage}}%
+ {\par\unskip\endMakeFramed%
+ \at@end@of@kframe}
+\makeatother
+
+\definecolor{shadecolor}{rgb}{.97, .97, .97}
+\definecolor{messagecolor}{rgb}{0, 0, 0}
+\definecolor{warningcolor}{rgb}{1, 0, 1}
+\definecolor{errorcolor}{rgb}{1, 0, 0}
+\newenvironment{knitrout}{}{} % an empty environment to be redefined in TeX
+
+\usepackage{alltt}
+\usepackage[sc]{mathpazo}
+\usepackage{amsmath, amsthm, amssymb}
+\usepackage{graphicx}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\geometry{verbose,tmargin=2.5cm,bmargin=2.5cm,lmargin=1cm,rmargin=1cm}
+\setcounter{secnumdepth}{2}
+\setcounter{tocdepth}{2}
+\usepackage{url}
+\usepackage[unicode=true,pdfusetitle,
+ bookmarks=true,bookmarksnumbered=true,bookmarksopen=true,bookmarksopenlevel=2,
+ breaklinks=false,pdfborder={0 0 1},backref=false,colorlinks=false]
+ {hyperref}
+\hypersetup{pdfstartview={XYZ null null 1}}
+\usepackage{float}
+\usepackage{bm}
+\usepackage{tikz}
+ %changes default sectioning commands
+%\usepackage{breakurl}
+\renewcommand{\thesubsection}{(\alph{subsection})}
+\renewcommand{\thesubsubsection}{\roman{subsection}.}
+\usepackage{lastpage}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\lhead{}
+\chead{\leftmark}
+\rhead{}
+\lfoot{Aaron Gonzales; Data Mining}
+\cfoot{Homework 13}
+\rfoot{Page \thepage\ of \pageref{LastPage}}
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\begin{document}
+
+\title{Data Mining: Assignment Two}
+\author{Aaron Gonzales}
+\maketitle
+
+%%%%%%%%knitr option%%%%%%%
+
+
+
+
+\section{Neural Network}
+
+Reading the data, optimizing for speed:
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{tab5rows} \hlkwb{<-} \hlkwd{read.table}\hlstd{(}\hlstr{"~/Dropbox/cs/datamining/data-mining-is-fun/assignments/two/data.txt"}\hlstd{,} \hlkwc{header} \hlstd{=} \hlnum{FALSE}\hlstd{,} \hlkwc{nrows} \hlstd{=} \hlnum{5}\hlstd{)}
+\hlstd{classes} \hlkwb{<-} \hlkwd{sapply}\hlstd{(tab5rows, class)}
+\hlstd{data} \hlkwb{<-} \hlkwd{read.table}\hlstd{(}\hlstr{"~/Dropbox/cs/datamining/data-mining-is-fun/assignments/two/data.txt"}\hlstd{,} \hlkwc{header} \hlstd{=} \hlnum{FALSE}\hlstd{,} \hlkwc{colClasses} \hlstd{= classes,} \hlkwc{nrows} \hlstd{=} \hlnum{11000}\hlstd{,} \hlkwc{comment.char}\hlstd{=}\hlstr{""}\hlstd{)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+\subsection {}
+
+Using the nnet package and a small function to tabulate our predictions.
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{library}\hlstd{(nnet)}
+\hlkwd{nrow}\hlstd{(data)}
+\end{alltt}
+\begin{verbatim}
+## [1] 10000
+\end{verbatim}
+\begin{alltt}
+\hlcom{#Define class 'labels' for our set.}
+\hlstd{targets} \hlkwb{<-} \hlkwd{class.ind}\hlstd{(}\hlkwd{c}\hlstd{(}\hlkwd{rep}\hlstd{(}\hlstr{'0'}\hlstd{,} \hlnum{5000}\hlstd{),} \hlkwd{rep}\hlstd{(}\hlstr{'1'}\hlstd{,}\hlnum{5000}\hlstd{)))}
+\hlcom{#test_data <- smalldata[sample(nrow(smalldata), 5000),]}
+\hlstd{test.cl} \hlkwb{<-} \hlkwa{function}\hlstd{(}\hlkwc{true}\hlstd{,} \hlkwc{pred}\hlstd{) \{}
+    \hlstd{actual} \hlkwb{<-} \hlkwd{max.col}\hlstd{(true)} \hlopt{-} \hlnum{1}
+    \hlstd{predicted} \hlkwb{<-} \hlkwd{max.col}\hlstd{(pred)} \hlopt{-} \hlnum{1}
+    \hlkwd{table}\hlstd{(actual, predicted)}
+
+\hlstd{\}}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{smalldata} \hlkwb{<-} \hlkwd{subset}\hlstd{(data,} \hlkwc{select} \hlstd{=} \hlkwd{c}\hlstd{(V1,V2, V3, V4))}
+\hlstd{targets} \hlkwb{<-} \hlkwd{class.ind}\hlstd{(}\hlkwd{c}\hlstd{(}\hlkwd{rep}\hlstd{(}\hlstr{'0'}\hlstd{,} \hlnum{5000}\hlstd{),} \hlkwd{rep}\hlstd{(}\hlstr{'1'}\hlstd{,}\hlnum{5000}\hlstd{)))}
+\hlcom{#test_data <- smalldata[sample(nrow(smalldata), 5000),]}
+\hlstd{accuracy_rate} \hlkwb{<-} \hlkwa{NULL}
+\hlkwa{for} \hlstd{(i} \hlkwa{in} \hlnum{1}\hlopt{:}\hlnum{2}\hlstd{) \{}
+  \hlstd{train} \hlkwb{<-} \hlkwd{c}\hlstd{(}\hlkwd{sample}\hlstd{(}\hlnum{1}\hlopt{:}\hlnum{5000}\hlstd{,} \hlnum{450}\hlstd{),} \hlkwd{sample}\hlstd{(}\hlnum{5000}\hlopt{:}\hlnum{10000}\hlstd{,}\hlnum{450}\hlstd{))}
+  \hlstd{neural_net} \hlkwb{<-} \hlkwd{nnet}\hlstd{(smalldata[train,], targets[train,],} \hlkwc{size}\hlstd{=}\hlnum{10}\hlstd{,} \hlkwc{rang} \hlstd{=} \hlnum{0.1}\hlstd{,} \hlkwc{maxit} \hlstd{=}\hlnum{200}\hlstd{,} \hlkwc{MaxNWts} \hlstd{=} \hlnum{26000}\hlstd{)}
+  \hlstd{a} \hlkwb{<-} \hlkwd{test.cl}\hlstd{(targets[}\hlopt{-}\hlstd{train,],} \hlkwd{predict}\hlstd{(neural_net, smalldata[}\hlopt{-}\hlstd{train,]))}
+  \hlkwd{print}\hlstd{(a)}
+  \hlcom{# error rate}
+  \hlstd{accuracy_rate[i]} \hlkwb{=} \hlnum{1}\hlopt{-}\hlstd{(a[}\hlnum{1}\hlstd{,}\hlnum{2}\hlstd{]}\hlopt{+}\hlstd{a[}\hlnum{2}\hlstd{,}\hlnum{1}\hlstd{])} \hlopt{/} \hlstd{(a[}\hlnum{1}\hlstd{,}\hlnum{1}\hlstd{]}\hlopt{+}\hlstd{a[}\hlnum{2}\hlstd{,}\hlnum{2}\hlstd{])}
+  \hlkwd{print}\hlstd{(}\hlstr{"finished run "}\hlstd{)}
+\hlstd{\}}
+\end{alltt}
+\begin{verbatim}
+## # weights:  72
+## initial  value 451.334452 
+## iter  10 value 327.221188
+## iter  20 value 322.725060
+## iter  30 value 235.049688
+## iter  40 value 232.869533
+## iter  50 value 230.007035
+## iter  60 value 228.008672
+## iter  70 value 228.007333
+## iter  80 value 226.020105
+## iter  90 value 226.007900
+## iter 100 value 226.007554
+## iter 110 value 224.008560
+## iter 120 value 224.005990
+## iter 130 value 224.005402
+## iter 140 value 224.001424
+## iter 150 value 222.064803
+## iter 160 value 222.006044
+## iter 170 value 222.005349
+## iter 180 value 222.005230
+## final  value 222.004955 
+## converged
+##       predicted
+## actual    0    1
+##      0 3962  588
+##      1  487 4063
+## [1] "finished run "
+## # weights:  72
+## initial  value 458.135487 
+## iter  10 value 258.639580
+## iter  20 value 251.627515
+## iter  30 value 247.832327
+## iter  40 value 246.249208
+## iter  50 value 244.375720
+## iter  60 value 241.291073
+## iter  70 value 232.740171
+## iter  80 value 228.119845
+## iter  90 value 226.389288
+## iter 100 value 224.882510
+## iter 110 value 217.967684
+## iter 120 value 214.202867
+## iter 130 value 208.250834
+## iter 140 value 169.769658
+## iter 150 value 163.722617
+## iter 160 value 159.576286
+## iter 170 value 156.004103
+## iter 180 value 153.376762
+## iter 190 value 143.111016
+## iter 200 value 140.891957
+## final  value 140.891957 
+## stopped after 200 iterations
+##       predicted
+## actual    0    1
+##      0 4109  441
+##      1  740 3810
+## [1] "finished run "
+\end{verbatim}
+\begin{alltt}
+\hlstd{accuracy_rate}
+\end{alltt}
+\begin{verbatim}
+## [1] 0.8660 0.8509
+\end{verbatim}
+\begin{alltt}
+\hlkwd{mean}\hlstd{(accuracy_rate)}
+\end{alltt}
+\begin{verbatim}
+## [1] 0.8585
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlcom{# Vector for accuracy rate on each run}
+\hlstd{accuracy_rate} \hlkwb{<-} \hlkwa{NULL}
+\hlcom{# train the network 10 times on 90 percent of each sample}
+\hlkwa{for} \hlstd{(i} \hlkwa{in} \hlnum{1}\hlopt{:}\hlnum{10}\hlstd{) \{}
+  \hlcom{# train is made from sampling at random from each half of the}
+  \hlcom{# data}
+  \hlstd{train} \hlkwb{<-} \hlkwd{c}\hlstd{(}\hlkwd{sample}\hlstd{(}\hlnum{1}\hlopt{:}\hlnum{5000}\hlstd{,} \hlnum{4500}\hlstd{),} \hlkwd{sample}\hlstd{(}\hlnum{5000}\hlopt{:}\hlnum{10000}\hlstd{,}\hlnum{4500}\hlstd{))}
+  \hlstd{neural_net} \hlkwb{<-} \hlkwd{nnet}\hlstd{(data[train,], targets[train,],}
+                     \hlkwc{size}\hlstd{=}\hlnum{10}\hlstd{,}
+                     \hlkwc{rang} \hlstd{=} \hlnum{0.1}\hlstd{,}
+                     \hlkwc{maxit} \hlstd{=}\hlnum{100}\hlstd{,}
+                     \hlkwc{MaxNWts} \hlstd{=} \hlnum{26000}\hlstd{)}
+  \hlcom{# hold values in table and print them}
+  \hlcom{# tests prediction with the non-sampled remnants of the data}
+  \hlstd{a} \hlkwb{<-} \hlkwd{test.cl}\hlstd{(targets[}\hlopt{-}\hlstd{train,],} \hlkwd{predict}\hlstd{(neural_net, data[}\hlopt{-}\hlstd{train,]))}
+  \hlkwd{print}\hlstd{(a)}
+  \hlcom{# error rate}
+  \hlstd{accuracy_rate[i]} \hlkwb{=} \hlnum{1}\hlopt{-}\hlstd{(a[}\hlnum{1}\hlstd{,}\hlnum{2}\hlstd{]}\hlopt{+}\hlstd{a[}\hlnum{2}\hlstd{,}\hlnum{1}\hlstd{])} \hlopt{/} \hlstd{(a[}\hlnum{1}\hlstd{,}\hlnum{1}\hlstd{]}\hlopt{+}\hlstd{a[}\hlnum{2}\hlstd{,}\hlnum{2}\hlstd{])}
+  \hlkwd{print}\hlstd{(}\hlstr{"finished run "}\hlstd{)}
+\hlstd{\}}
+\end{alltt}
+\begin{verbatim}
+## # weights:  10032
+## initial  value 4519.044769 
+## iter  10 value 1920.675214
+## iter  20 value 1821.884527
+## iter  30 value 1815.212459
+## iter  40 value 1805.378522
+## iter  50 value 1801.001336
+## iter  60 value 1800.994814
+## iter  70 value 1800.992528
+## iter  80 value 1800.987958
+## iter  90 value 1800.974425
+## iter 100 value 1800.787020
+## final  value 1800.787020 
+## stopped after 100 iterations
+##       predicted
+## actual   0   1
+##      0 497   2
+##      1 100 401
+## [1] "finished run "
+## # weights:  10032
+## initial  value 4538.520491 
+## iter  10 value 2644.230764
+## iter  20 value 2643.225081
+## final  value 2643.223756 
+## converged
+##       predicted
+## actual   0   1
+##      0 460  40
+##      1 105 396
+## [1] "finished run "
+## # weights:  10032
+## initial  value 4505.217915 
+## iter  10 value 3840.630191
+## final  value 3840.000021 
+## converged
+##       predicted
+## actual   0   1
+##      0 359 141
+##      1  69 432
+## [1] "finished run "
+## # weights:  10032
+## initial  value 4484.199195 
+## iter  10 value 1817.144627
+## iter  20 value 1804.726962
+## iter  30 value 1018.263056
+## iter  40 value 276.145805
+## iter  50 value 149.648442
+## iter  60 value 126.339842
+## iter  70 value 121.059186
+## iter  80 value 118.527459
+## iter  90 value 112.441895
+## iter 100 value 108.802717
+## final  value 108.802717 
+## stopped after 100 iterations
+##       predicted
+## actual   0   1
+##      0 456  44
+##      1  18 483
+## [1] "finished run "
+## # weights:  10032
+## initial  value 4551.293441 
+## iter  10 value 2640.951304
+## iter  20 value 2595.035711
+## iter  30 value 2581.910447
+## iter  40 value 2571.735794
+## iter  50 value 2161.942237
+## iter  60 value 2140.505889
+## iter  70 value 2119.834916
+## iter  80 value 2116.977686
+## iter  90 value 2116.945339
+## iter 100 value 2113.720418
+## final  value 2113.720418 
+## stopped after 100 iterations
+##       predicted
+## actual   0   1
+##      0 479  21
+##      1 105 396
+## [1] "finished run "
+## # weights:  10032
+## initial  value 4541.914191 
+## iter  10 value 2404.984418
+## iter  20 value 2401.999199
+## iter  20 value 2401.999193
+## iter  20 value 2401.999188
+## final  value 2401.999188 
+## converged
+##       predicted
+## actual   0   1
+##      0 473  27
+##      1 122 379
+## [1] "finished run "
+## # weights:  10032
+## initial  value 4521.727445 
+## final  value 2358.000000 
+## converged
+##       predicted
+## actual   0   1
+##      0 459  41
+##      1  98 403
+## [1] "finished run "
+## # weights:  10032
+## initial  value 4548.811518 
+## final  value 2484.999902 
+## converged
+##       predicted
+## actual   0   1
+##      0 460  40
+##      1  94 406
+## [1] "finished run "
+## # weights:  10032
+## initial  value 4601.836850 
+## iter  10 value 2265.309924
+## iter  20 value 2238.066232
+## iter  30 value 2196.172340
+## iter  40 value 2187.630918
+## iter  50 value 2149.644828
+## iter  60 value 2148.036092
+## iter  70 value 2147.035635
+## iter  80 value 2139.833175
+## iter  90 value 2138.220191
+## iter 100 value 2121.847738
+## final  value 2121.847738 
+## stopped after 100 iterations
+##       predicted
+## actual   0   1
+##      0 476  24
+##      1 108 393
+## [1] "finished run "
+## # weights:  10032
+## initial  value 4565.683485 
+## final  value 2482.000989 
+## converged
+##       predicted
+## actual   0   1
+##      0 439  61
+##      1  83 418
+## [1] "finished run "
+\end{verbatim}
+\begin{alltt}
+\hlcom{# prints vector of rates}
+\hlstd{accuracy_rate}
+\end{alltt}
+\begin{verbatim}
+##  [1] 0.8864 0.8306 0.7345 0.9340 0.8560 0.8251 0.8387 0.8453 0.8481 0.8320
+\end{verbatim}
+\begin{alltt}
+\hlcom{# mean of the accuracy rate}
+\hlkwd{mean}\hlstd{(accuracy_rate)}
+\end{alltt}
+\begin{verbatim}
+## [1] 0.8431
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+Neural network...
+
+
+
+
+
+
+
+\end{document}
