@@ -128,10 +128,114 @@ mean(accuracy_rate)
 Neural network...
 
 
+We use the caret (classification and regression tool) package with doMC(Parallelization for R) to train an svm (libsvm package) with a radial basis function.
+
+<<svm, cache=TRUE>>=
+library(caret)
+library(doMC)
+# class labels don't need to be dummy coded like they did for the aNN
+data_svm <- data
+labels <- c(rep(0,5000), rep(1,5000))
+data_svm$labels <- labels
+data_svm$labels <- as.factor(data_svm$labels)
+
+# subsetting into train and test sets.
+index <- 1:nrow(data_svm)
+testindex <- sample(index, trunc(length(index)*30/100))
+testset <- data_svm[testindex,]
+trainset <- data_svm[-testindex,]
+
+# training the model with a radial basis function.
+# uses the lables ~ . to say 'the class labels are defined in the varible
+# 'labels'. 10-fold cross validation is performed in the model and reported later and
+# doesn't need to be done by hand.
+system.time(
+  model <- train(labels ~ .,
+                 data = trainset,
+                 method="svmRadial",
+                 trControl=trainControl(method='cv', number = 10)
+                 )
+)
+print(model)
+# prediction.
+prediction <- predict(model, testset[,-1001])
+tab <- table(pred = prediction, true = testset$labels)
+plot(model)
+confusionMatrix(model)
+print(tab)
+# model accuracy
+print(1-(tab[1,2]+tab[2,1]) / (tab[1,1]+tab[2,2]))
+@
+
+
+
 <<pca2>>=
+labels <- c(
+  rep('0',500),
+	rep('1',500),
+	rep('0',500),
+	rep('1',500),
+	rep('0',500),
+	rep('1',500),
+	rep('0',500),
+	rep('1',500),
+	rep('0',500),
+	rep('1',500),
+	rep('0',500),
+	rep('1',500),
+	rep('0',500),
+	rep('1',500),
+	rep('0',500),
+	rep('1',500),
+	rep('0',500),
+	rep('1',500),
+	rep('0',500),
+	rep('1',500)
+)
+
+targets <- class.ind(c(
+  rep('0',500),
+  rep('1',500),
+	rep('0',500),
+	rep('1',500),
+	rep('0',500),
+	rep('1',500),
+	rep('0',500),
+	rep('1',500),
+	rep('0',500),
+	rep('1',500),
+	rep('0',500),
+	rep('1',500),
+	rep('0',500),
+	rep('1',500),
+	rep('0',500),
+	rep('1',500),
+	rep('0',500),
+	rep('1',500),
+	rep('0',500),
+	rep('1',500)
+  )
+)
 
 @
 
+<<nn2>>=
+smalldata <- subset(data, select = c(V1,V2, V3, V4))
+#test_data <- smalldata[sample(nrow(smalldata), 5000),]
+accuracy_rate <- NULL
+for (i in 1:2) {
+  train <- c(sample(1:5000, 450), sample(5000:10000,450))
+  neural_net <- nnet(smalldata[train,], targets[train,], size=10, rang = 0.1, maxit =200, MaxNWts = 26000)
+  a <- test.cl(targets[-train,], predict(neural_net, smalldata[-train,]))
+  print(a)
+  # error rate
+  accuracy_rate[i] = 1-(a[1,2]+a[2,1]) / (a[1,1]+a[2,2])
+  print("finished run ")
+}
+accuracy_rate
+mean(accuracy_rate)
+
+@
 
 
 

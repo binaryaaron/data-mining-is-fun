@@ -407,7 +407,152 @@ Using the nnet package and a small function to tabulate our predictions.
 Neural network...
 
 
+We use the caret (classification and regression tool) package with doMC(Parallelization for R) to train an svm (libsvm package) with a radial basis function.
 
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{library}\hlstd{(caret)}
+\end{alltt}
+
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# Loading required package: lattice}}\begin{alltt}
+\hlkwd{library}\hlstd{(doMC)}
+\end{alltt}
+
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# Loading required package: foreach\\\#\# Loading required package: iterators\\\#\# Loading required package: parallel}}\begin{alltt}
+\hlcom{# class labels don't need to be dummy coded like they did for the aNN}
+\hlstd{data_svm} \hlkwb{<-} \hlstd{data}
+\hlstd{labels} \hlkwb{<-} \hlkwd{c}\hlstd{(}\hlkwd{rep}\hlstd{(}\hlnum{0}\hlstd{,}\hlnum{5000}\hlstd{),} \hlkwd{rep}\hlstd{(}\hlnum{1}\hlstd{,}\hlnum{5000}\hlstd{))}
+\hlstd{data_svm}\hlopt{$}\hlstd{labels} \hlkwb{<-} \hlstd{labels}
+\hlstd{data_svm}\hlopt{$}\hlstd{labels} \hlkwb{<-} \hlkwd{as.factor}\hlstd{(data_svm}\hlopt{$}\hlstd{labels)}
+
+\hlcom{# subsetting into train and test sets.}
+\hlstd{index} \hlkwb{<-} \hlnum{1}\hlopt{:}\hlkwd{nrow}\hlstd{(data_svm)}
+\hlstd{testindex} \hlkwb{<-} \hlkwd{sample}\hlstd{(index,} \hlkwd{trunc}\hlstd{(}\hlkwd{length}\hlstd{(index)}\hlopt{*}\hlnum{30}\hlopt{/}\hlnum{100}\hlstd{))}
+\hlstd{testset} \hlkwb{<-} \hlstd{data_svm[testindex,]}
+\hlstd{trainset} \hlkwb{<-} \hlstd{data_svm[}\hlopt{-}\hlstd{testindex,]}
+
+\hlcom{# training the model with a radial basis function.}
+\hlcom{# uses the lables ~ . to say 'the class labels are defined in the varible}
+\hlcom{# 'labels'. 10-fold cross validation is performed in the model and reported later and}
+\hlcom{# doesn't need to be done by hand.}
+\hlkwd{system.time}\hlstd{(}
+  \hlstd{model} \hlkwb{<-} \hlkwd{train}\hlstd{(labels} \hlopt{~} \hlstd{.,}
+                 \hlkwc{data} \hlstd{= trainset,}
+                 \hlkwc{method}\hlstd{=}\hlstr{"svmRadial"}\hlstd{,}
+                 \hlkwc{trControl}\hlstd{=}\hlkwd{trainControl}\hlstd{(}\hlkwc{method}\hlstd{=}\hlstr{'cv'}\hlstd{,} \hlkwc{number} \hlstd{=} \hlnum{10}\hlstd{)}
+                 \hlstd{)}
+\hlstd{)}
+\end{alltt}
+
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# Loading required package: kernlab}}\begin{verbatim}
+##    user  system elapsed 
+## 1108.72   10.25 1123.19
+\end{verbatim}
+\begin{alltt}
+\hlkwd{print}\hlstd{(model)}
+\end{alltt}
+\begin{verbatim}
+## Support Vector Machines with Radial Basis Function Kernel 
+## 
+## 7000 samples
+## 1000 predictors
+##    2 classes: '0', '1' 
+## 
+## No pre-processing
+## Resampling: Cross-Validated (10 fold) 
+## 
+## Summary of sample sizes: 6300, 6299, 6300, 6301, 6301, 6300, ... 
+## 
+## Resampling results across tuning parameters:
+## 
+##   C    Accuracy  Kappa  Accuracy SD  Kappa SD
+##   0.2  1         1      5e-04        9e-04   
+##   0.5  1         1      5e-04        9e-04   
+##   1.0  1         1      5e-04        9e-04   
+## 
+## Tuning parameter 'sigma' was held constant at a value of 0.0005534
+## Accuracy was used to select the optimal model using  the largest value.
+## The final values used for the model were sigma = 0.0005534 and C = 0.25.
+\end{verbatim}
+\begin{alltt}
+\hlcom{# prediction.}
+\hlstd{prediction} \hlkwb{<-} \hlkwd{predict}\hlstd{(model, testset[,}\hlopt{-}\hlnum{1001}\hlstd{])}
+\hlstd{tab} \hlkwb{<-} \hlkwd{table}\hlstd{(}\hlkwc{pred} \hlstd{= prediction,} \hlkwc{true} \hlstd{= testset}\hlopt{$}\hlstd{labels)}
+\hlkwd{plot}\hlstd{(model)}
+\hlkwd{confusionMatrix}\hlstd{(model)}
+\end{alltt}
+\begin{verbatim}
+## Cross-Validated (10 fold) Confusion Matrix 
+## 
+## (entries are percentages of table totals)
+##  
+##           Reference
+## Prediction    0    1
+##          0 50.2  0.0
+##          1  0.0 49.7
+\end{verbatim}
+\begin{alltt}
+\hlkwd{print}\hlstd{(tab)}
+\end{alltt}
+\begin{verbatim}
+##     true
+## pred    0    1
+##    0 1482    0
+##    1    0 1518
+\end{verbatim}
+\begin{alltt}
+\hlcom{# model accuracy}
+\hlkwd{print}\hlstd{(}\hlnum{1}\hlopt{-}\hlstd{(tab[}\hlnum{1}\hlstd{,}\hlnum{2}\hlstd{]}\hlopt{+}\hlstd{tab[}\hlnum{2}\hlstd{,}\hlnum{1}\hlstd{])} \hlopt{/} \hlstd{(tab[}\hlnum{1}\hlstd{,}\hlnum{1}\hlstd{]}\hlopt{+}\hlstd{tab[}\hlnum{2}\hlstd{,}\hlnum{2}\hlstd{]))}
+\end{alltt}
+\begin{verbatim}
+## [1] 1
+\end{verbatim}
+\end{kframe}
+
+{\centering \includegraphics[width=.45\linewidth]{figure/minimal-svm} 
+
+}
+
+
+
+\end{knitrout}
+
+
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{labels} \hlkwb{<-} \hlkwd{c}\hlstd{(}
+  \hlkwd{rep}\hlstd{(}\hlstr{'0'}\hlstd{,}\hlnum{500}\hlstd{),}
+        \hlkwd{rep}\hlstd{(}\hlstr{'1'}\hlstd{,}\hlnum{500}\hlstd{),}
+        \hlkwd{rep}\hlstd{(}\hlstr{'0'}\hlstd{,}\hlnum{500}\hlstd{),}
+        \hlkwd{rep}\hlstd{(}\hlstr{'1'}\hlstd{,}\hlnum{500}\hlstd{),}
+        \hlkwd{rep}\hlstd{(}\hlstr{'0'}\hlstd{,}\hlnum{500}\hlstd{),}
+        \hlkwd{rep}\hlstd{(}\hlstr{'1'}\hlstd{,}\hlnum{500}\hlstd{),}
+        \hlkwd{rep}\hlstd{(}\hlstr{'0'}\hlstd{,}\hlnum{500}\hlstd{),}
+        \hlkwd{rep}\hlstd{(}\hlstr{'1'}\hlstd{,}\hlnum{500}\hlstd{),}
+        \hlkwd{rep}\hlstd{(}\hlstr{'0'}\hlstd{,}\hlnum{500}\hlstd{),}
+        \hlkwd{rep}\hlstd{(}\hlstr{'1'}\hlstd{,}\hlnum{500}\hlstd{),}
+        \hlkwd{rep}\hlstd{(}\hlstr{'0'}\hlstd{,}\hlnum{500}\hlstd{),}
+        \hlkwd{rep}\hlstd{(}\hlstr{'1'}\hlstd{,}\hlnum{500}\hlstd{),}
+        \hlkwd{rep}\hlstd{(}\hlstr{'0'}\hlstd{,}\hlnum{500}\hlstd{),}
+        \hlkwd{rep}\hlstd{(}\hlstr{'1'}\hlstd{,}\hlnum{500}\hlstd{),}
+        \hlkwd{rep}\hlstd{(}\hlstr{'0'}\hlstd{,}\hlnum{500}\hlstd{),}
+        \hlkwd{rep}\hlstd{(}\hlstr{'1'}\hlstd{,}\hlnum{500}\hlstd{),}
+        \hlkwd{rep}\hlstd{(}\hlstr{'0'}\hlstd{,}\hlnum{500}\hlstd{),}
+        \hlkwd{rep}\hlstd{(}\hlstr{'1'}\hlstd{,}\hlnum{500}\hlstd{),}
+        \hlkwd{rep}\hlstd{(}\hlstr{'0'}\hlstd{,}\hlnum{500}\hlstd{),}
+        \hlkwd{rep}\hlstd{(}\hlstr{'1'}\hlstd{,}\hlnum{500}\hlstd{)}
+\hlstd{)}
+
+\hlstd{targets} \hlkwb{<-} \hlkwd{class.ind}\hlstd{(}\hlkwd{c}\hlstd{(}\hlkwd{rep}\hlstd{(}\hlstr{'0'}\hlstd{,} \hlnum{5000}\hlstd{),} \hlkwd{rep}\hlstd{(}\hlstr{'1'}\hlstd{,}\hlnum{5000}\hlstd{)))}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
 
 
 
