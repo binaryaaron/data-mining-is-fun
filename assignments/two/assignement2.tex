@@ -112,6 +112,16 @@ Using the nnet package and a small function to tabulate our predictions.
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 \begin{alltt}
 \hlkwd{library}\hlstd{(nnet)}
+\hlkwd{library}\hlstd{(caret)}
+\end{alltt}
+
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# Loading required package: lattice}}\begin{alltt}
+\hlkwd{library}\hlstd{(pROC)}
+\end{alltt}
+
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# Type 'citation("{}pROC"{})' for a citation.\\\#\# \\\#\# Attaching package: 'pROC'\\\#\# \\\#\# The following objects are masked from 'package:stats':\\\#\# \\\#\#\ \ \ \  cov, smooth, var}}\begin{alltt}
 \hlkwd{nrow}\hlstd{(data)}
 \end{alltt}
 \begin{verbatim}
@@ -120,7 +130,11 @@ Using the nnet package and a small function to tabulate our predictions.
 \begin{alltt}
 \hlcom{#Define class 'labels' for our set.}
 \hlstd{targets} \hlkwb{<-} \hlkwd{class.ind}\hlstd{(}\hlkwd{c}\hlstd{(}\hlkwd{rep}\hlstd{(}\hlstr{'0'}\hlstd{,} \hlnum{5000}\hlstd{),} \hlkwd{rep}\hlstd{(}\hlstr{'1'}\hlstd{,}\hlnum{5000}\hlstd{)))}
-\hlcom{#test_data <- smalldata[sample(nrow(smalldata), 5000),]}
+\hlstd{labels} \hlkwb{<-} \hlkwd{c}\hlstd{(}\hlkwd{rep}\hlstd{(}\hlnum{0}\hlstd{,}\hlnum{5000}\hlstd{),} \hlkwd{rep}\hlstd{(}\hlnum{1}\hlstd{,}\hlnum{5000}\hlstd{))}
+\hlstd{data}\hlopt{$}\hlstd{labels} \hlkwb{<-} \hlstd{labels}
+\hlstd{data}\hlopt{$}\hlstd{labels} \hlkwb{<-} \hlkwd{as.factor}\hlstd{(data}\hlopt{$}\hlstd{labels)}
+
+\hlcom{# small function to show predicted results}
 \hlstd{test.cl} \hlkwb{<-} \hlkwa{function}\hlstd{(}\hlkwc{true}\hlstd{,} \hlkwc{pred}\hlstd{) \{}
     \hlstd{actual} \hlkwb{<-} \hlkwd{max.col}\hlstd{(true)} \hlopt{-} \hlnum{1}
     \hlstd{predicted} \hlkwb{<-} \hlkwd{max.col}\hlstd{(pred)} \hlopt{-} \hlnum{1}
@@ -131,279 +145,145 @@ Using the nnet package and a small function to tabulate our predictions.
 \end{kframe}
 \end{knitrout}
 
-
 \begin{knitrout}
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 \begin{alltt}
-\hlstd{smalldata} \hlkwb{<-} \hlkwd{subset}\hlstd{(data,} \hlkwc{select} \hlstd{=} \hlkwd{c}\hlstd{(V1,V2, V3, V4))}
-\hlstd{targets} \hlkwb{<-} \hlkwd{class.ind}\hlstd{(}\hlkwd{c}\hlstd{(}\hlkwd{rep}\hlstd{(}\hlstr{'0'}\hlstd{,} \hlnum{5000}\hlstd{),} \hlkwd{rep}\hlstd{(}\hlstr{'1'}\hlstd{,}\hlnum{5000}\hlstd{)))}
-\hlcom{#test_data <- smalldata[sample(nrow(smalldata), 5000),]}
-\hlstd{accuracy_rate} \hlkwb{<-} \hlkwa{NULL}
-\hlkwa{for} \hlstd{(i} \hlkwa{in} \hlnum{1}\hlopt{:}\hlnum{2}\hlstd{) \{}
-  \hlstd{train} \hlkwb{<-} \hlkwd{c}\hlstd{(}\hlkwd{sample}\hlstd{(}\hlnum{1}\hlopt{:}\hlnum{5000}\hlstd{,} \hlnum{450}\hlstd{),} \hlkwd{sample}\hlstd{(}\hlnum{5000}\hlopt{:}\hlnum{10000}\hlstd{,}\hlnum{450}\hlstd{))}
-  \hlstd{neural_net} \hlkwb{<-} \hlkwd{nnet}\hlstd{(smalldata[train,], targets[train,],} \hlkwc{size}\hlstd{=}\hlnum{10}\hlstd{,} \hlkwc{rang} \hlstd{=} \hlnum{0.1}\hlstd{,} \hlkwc{maxit} \hlstd{=}\hlnum{200}\hlstd{,} \hlkwc{MaxNWts} \hlstd{=} \hlnum{26000}\hlstd{)}
-  \hlstd{a} \hlkwb{<-} \hlkwd{test.cl}\hlstd{(targets[}\hlopt{-}\hlstd{train,],} \hlkwd{predict}\hlstd{(neural_net, smalldata[}\hlopt{-}\hlstd{train,]))}
-  \hlkwd{print}\hlstd{(a)}
-  \hlcom{# error rate}
-  \hlstd{accuracy_rate[i]} \hlkwb{=} \hlnum{1}\hlopt{-}\hlstd{(a[}\hlnum{1}\hlstd{,}\hlnum{2}\hlstd{]}\hlopt{+}\hlstd{a[}\hlnum{2}\hlstd{,}\hlnum{1}\hlstd{])} \hlopt{/} \hlstd{(a[}\hlnum{1}\hlstd{,}\hlnum{1}\hlstd{]}\hlopt{+}\hlstd{a[}\hlnum{2}\hlstd{,}\hlnum{2}\hlstd{])}
-  \hlkwd{print}\hlstd{(}\hlstr{"finished run "}\hlstd{)}
-\hlstd{\}}
+\hlcom{# caret has many functions to help chop up data, here we partition the data}
+\hlcom{# into a test and training set}
+\hlkwd{library}\hlstd{(doMC)}
 \end{alltt}
-\begin{verbatim}
-## # weights:  72
-## initial  value 451.334452 
-## iter  10 value 327.221188
-## iter  20 value 322.725060
-## iter  30 value 235.049688
-## iter  40 value 232.869533
-## iter  50 value 230.007035
-## iter  60 value 228.008672
-## iter  70 value 228.007333
-## iter  80 value 226.020105
-## iter  90 value 226.007900
-## iter 100 value 226.007554
-## iter 110 value 224.008560
-## iter 120 value 224.005990
-## iter 130 value 224.005402
-## iter 140 value 224.001424
-## iter 150 value 222.064803
-## iter 160 value 222.006044
-## iter 170 value 222.005349
-## iter 180 value 222.005230
-## final  value 222.004955 
-## converged
-##       predicted
-## actual    0    1
-##      0 3962  588
-##      1  487 4063
-## [1] "finished run "
-## # weights:  72
-## initial  value 458.135487 
-## iter  10 value 258.639580
-## iter  20 value 251.627515
-## iter  30 value 247.832327
-## iter  40 value 246.249208
-## iter  50 value 244.375720
-## iter  60 value 241.291073
-## iter  70 value 232.740171
-## iter  80 value 228.119845
-## iter  90 value 226.389288
-## iter 100 value 224.882510
-## iter 110 value 217.967684
-## iter 120 value 214.202867
-## iter 130 value 208.250834
-## iter 140 value 169.769658
-## iter 150 value 163.722617
-## iter 160 value 159.576286
-## iter 170 value 156.004103
-## iter 180 value 153.376762
-## iter 190 value 143.111016
-## iter 200 value 140.891957
-## final  value 140.891957 
-## stopped after 200 iterations
-##       predicted
-## actual    0    1
-##      0 4109  441
-##      1  740 3810
-## [1] "finished run "
-\end{verbatim}
-\begin{alltt}
-\hlstd{accuracy_rate}
+
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# Loading required package: foreach\\\#\# Loading required package: iterators\\\#\# Loading required package: parallel}}\begin{alltt}
+\hlcom{# sets multiple cores to help run the svm}
+\hlkwd{registerDoMC}\hlstd{(}\hlnum{2}\hlstd{)}
+\hlstd{data_small} \hlkwb{<-} \hlkwd{subset}\hlstd{(data,} \hlkwc{select}\hlstd{=}\hlkwd{c}\hlstd{(V1, V2, V3, V4, labels))}
+\hlstd{inTrain} \hlkwb{<-} \hlkwd{createDataPartition}\hlstd{(}\hlkwc{y} \hlstd{= data_small}\hlopt{$}\hlstd{labels,} \hlkwc{p}\hlstd{=}\hlnum{.75}\hlstd{,} \hlkwc{list}\hlstd{=}\hlnum{FALSE}\hlstd{)}
+\hlstd{training} \hlkwb{<-} \hlstd{data_small[inTrain,]}
+\hlstd{testing} \hlkwb{<-} \hlstd{data_small[}\hlopt{-}\hlstd{inTrain,]}
+
+\hlcom{# here is a control model that specifies to use repeated 10-fold cross validation}
+\hlstd{ctrl} \hlkwb{<-} \hlkwd{trainControl}\hlstd{(}\hlkwc{method} \hlstd{=} \hlstr{'repeatedcv'}\hlstd{,}
+                     \hlkwc{number} \hlstd{=} \hlnum{10}
+                     \hlstd{)}
+
+\hlcom{# we train the model on the training data and with the labeling data as a guide}
+\hlstd{fitsmall} \hlkwb{<-} \hlkwd{train}\hlstd{( training, training}\hlopt{$}\hlstd{labels,}
+              \hlkwc{method} \hlstd{=} \hlstr{"nnet"}\hlstd{,} \hlcom{# uses the 'nnet' package as a backend}
+              \hlkwc{algorithm} \hlstd{=} \hlstr{'backprop'}\hlstd{,}
+              \hlkwc{learningrate} \hlstd{=} \hlnum{0.1}\hlstd{,}
+              \hlkwc{trControl} \hlstd{= ctrl,}
+              \hlkwc{linout} \hlstd{=} \hlnum{FALSE}\hlstd{,}
+              \hlkwc{MaxNWts} \hlstd{=} \hlnum{15000}\hlstd{)}
+\hlcom{## many pages of printing supressed}
 \end{alltt}
-\begin{verbatim}
-## [1] 0.8660 0.8509
-\end{verbatim}
-\begin{alltt}
-\hlkwd{mean}\hlstd{(accuracy_rate)}
-\end{alltt}
-\begin{verbatim}
-## [1] 0.8585
-\end{verbatim}
 \end{kframe}
 \end{knitrout}
-
 
 
 \begin{knitrout}
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 \begin{alltt}
-\hlcom{# Vector for accuracy rate on each run}
-\hlstd{accuracy_rate} \hlkwb{<-} \hlkwa{NULL}
-\hlcom{# train the network 10 times on 90 percent of each sample}
-\hlkwa{for} \hlstd{(i} \hlkwa{in} \hlnum{1}\hlopt{:}\hlnum{10}\hlstd{) \{}
-  \hlcom{# train is made from sampling at random from each half of the}
-  \hlcom{# data}
-  \hlstd{train} \hlkwb{<-} \hlkwd{c}\hlstd{(}\hlkwd{sample}\hlstd{(}\hlnum{1}\hlopt{:}\hlnum{5000}\hlstd{,} \hlnum{4500}\hlstd{),} \hlkwd{sample}\hlstd{(}\hlnum{5000}\hlopt{:}\hlnum{10000}\hlstd{,}\hlnum{4500}\hlstd{))}
-  \hlstd{neural_net} \hlkwb{<-} \hlkwd{nnet}\hlstd{(data[train,], targets[train,],}
-                     \hlkwc{size}\hlstd{=}\hlnum{10}\hlstd{,}
-                     \hlkwc{rang} \hlstd{=} \hlnum{0.1}\hlstd{,}
-                     \hlkwc{maxit} \hlstd{=}\hlnum{100}\hlstd{,}
-                     \hlkwc{MaxNWts} \hlstd{=} \hlnum{26000}\hlstd{)}
-  \hlcom{# hold values in table and print them}
-  \hlcom{# tests prediction with the non-sampled remnants of the data}
-  \hlstd{a} \hlkwb{<-} \hlkwd{test.cl}\hlstd{(targets[}\hlopt{-}\hlstd{train,],} \hlkwd{predict}\hlstd{(neural_net, data[}\hlopt{-}\hlstd{train,]))}
-  \hlkwd{print}\hlstd{(a)}
-  \hlcom{# error rate}
-  \hlstd{accuracy_rate[i]} \hlkwb{=} \hlnum{1}\hlopt{-}\hlstd{(a[}\hlnum{1}\hlstd{,}\hlnum{2}\hlstd{]}\hlopt{+}\hlstd{a[}\hlnum{2}\hlstd{,}\hlnum{1}\hlstd{])} \hlopt{/} \hlstd{(a[}\hlnum{1}\hlstd{,}\hlnum{1}\hlstd{]}\hlopt{+}\hlstd{a[}\hlnum{2}\hlstd{,}\hlnum{2}\hlstd{])}
-  \hlkwd{print}\hlstd{(}\hlstr{"finished run "}\hlstd{)}
-\hlstd{\}}
+\hlcom{#shows the confusion matrix}
+\hlkwd{confusionMatrix}\hlstd{(fitsmall)}
 \end{alltt}
 \begin{verbatim}
-## # weights:  10032
-## initial  value 4519.044769 
-## iter  10 value 1920.675214
-## iter  20 value 1821.884527
-## iter  30 value 1815.212459
-## iter  40 value 1805.378522
-## iter  50 value 1801.001336
-## iter  60 value 1800.994814
-## iter  70 value 1800.992528
-## iter  80 value 1800.987958
-## iter  90 value 1800.974425
-## iter 100 value 1800.787020
-## final  value 1800.787020 
-## stopped after 100 iterations
-##       predicted
-## actual   0   1
-##      0 497   2
-##      1 100 401
-## [1] "finished run "
-## # weights:  10032
-## initial  value 4538.520491 
-## iter  10 value 2644.230764
-## iter  20 value 2643.225081
-## final  value 2643.223756 
-## converged
-##       predicted
-## actual   0   1
-##      0 460  40
-##      1 105 396
-## [1] "finished run "
-## # weights:  10032
-## initial  value 4505.217915 
-## iter  10 value 3840.630191
-## final  value 3840.000021 
-## converged
-##       predicted
-## actual   0   1
-##      0 359 141
-##      1  69 432
-## [1] "finished run "
-## # weights:  10032
-## initial  value 4484.199195 
-## iter  10 value 1817.144627
-## iter  20 value 1804.726962
-## iter  30 value 1018.263056
-## iter  40 value 276.145805
-## iter  50 value 149.648442
-## iter  60 value 126.339842
-## iter  70 value 121.059186
-## iter  80 value 118.527459
-## iter  90 value 112.441895
-## iter 100 value 108.802717
-## final  value 108.802717 
-## stopped after 100 iterations
-##       predicted
-## actual   0   1
-##      0 456  44
-##      1  18 483
-## [1] "finished run "
-## # weights:  10032
-## initial  value 4551.293441 
-## iter  10 value 2640.951304
-## iter  20 value 2595.035711
-## iter  30 value 2581.910447
-## iter  40 value 2571.735794
-## iter  50 value 2161.942237
-## iter  60 value 2140.505889
-## iter  70 value 2119.834916
-## iter  80 value 2116.977686
-## iter  90 value 2116.945339
-## iter 100 value 2113.720418
-## final  value 2113.720418 
-## stopped after 100 iterations
-##       predicted
-## actual   0   1
-##      0 479  21
-##      1 105 396
-## [1] "finished run "
-## # weights:  10032
-## initial  value 4541.914191 
-## iter  10 value 2404.984418
-## iter  20 value 2401.999199
-## iter  20 value 2401.999193
-## iter  20 value 2401.999188
-## final  value 2401.999188 
-## converged
-##       predicted
-## actual   0   1
-##      0 473  27
-##      1 122 379
-## [1] "finished run "
-## # weights:  10032
-## initial  value 4521.727445 
-## final  value 2358.000000 
-## converged
-##       predicted
-## actual   0   1
-##      0 459  41
-##      1  98 403
-## [1] "finished run "
-## # weights:  10032
-## initial  value 4548.811518 
-## final  value 2484.999902 
-## converged
-##       predicted
-## actual   0   1
-##      0 460  40
-##      1  94 406
-## [1] "finished run "
-## # weights:  10032
-## initial  value 4601.836850 
-## iter  10 value 2265.309924
-## iter  20 value 2238.066232
-## iter  30 value 2196.172340
-## iter  40 value 2187.630918
-## iter  50 value 2149.644828
-## iter  60 value 2148.036092
-## iter  70 value 2147.035635
-## iter  80 value 2139.833175
-## iter  90 value 2138.220191
-## iter 100 value 2121.847738
-## final  value 2121.847738 
-## stopped after 100 iterations
-##       predicted
-## actual   0   1
-##      0 476  24
-##      1 108 393
-## [1] "finished run "
-## # weights:  10032
-## initial  value 4565.683485 
-## final  value 2482.000989 
-## converged
-##       predicted
-## actual   0   1
-##      0 439  61
-##      1  83 418
-## [1] "finished run "
+## Cross-Validated (10 fold, repeated 1 times) Confusion Matrix 
+## 
+## (entries are percentages of table totals)
+##  
+##           Reference
+## Prediction  0  1
+##          0 50  0
+##          1  0 50
 \end{verbatim}
 \begin{alltt}
-\hlcom{# prints vector of rates}
-\hlstd{accuracy_rate}
+\hlcom{#prediction}
+\hlstd{smallpre} \hlkwb{<-} \hlkwd{predict}\hlstd{(fitsmall,} \hlkwc{newdata} \hlstd{= testing)}
+\hlkwd{summary}\hlstd{(smallpre)}
 \end{alltt}
 \begin{verbatim}
-##  [1] 0.8864 0.8306 0.7345 0.9340 0.8560 0.8251 0.8387 0.8453 0.8481 0.8320
+##    0    1 
+## 1250 1250
 \end{verbatim}
 \begin{alltt}
-\hlcom{# mean of the accuracy rate}
-\hlkwd{mean}\hlstd{(accuracy_rate)}
+\hlstd{a} \hlkwb{<-} \hlkwd{test.cl}\hlstd{(testing}\hlopt{$}\hlstd{labels,} \hlkwd{predict}\hlstd{(fitsmall, testing))}
+\hlkwd{print}\hlstd{(a)}
 \end{alltt}
 \begin{verbatim}
-## [1] 0.8431
+##       predicted
+## actual    0
+##      0 2500
 \end{verbatim}
 \end{kframe}
 \end{knitrout}
 
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlcom{# caret has many functions to help chop up data, here we partition the data}
+\hlcom{# into a test and training set}
+\hlstd{inTrain} \hlkwb{<-} \hlkwd{createDataPartition}\hlstd{(}\hlkwc{y} \hlstd{= data}\hlopt{$}\hlstd{labels,} \hlkwc{p}\hlstd{=}\hlnum{.75}\hlstd{,} \hlkwc{list}\hlstd{=}\hlnum{FALSE}\hlstd{)}
+\hlstd{training} \hlkwb{<-} \hlstd{data[inTrain,]}
+\hlstd{testing} \hlkwb{<-} \hlstd{data[}\hlopt{-}\hlstd{inTrain,]}
+
+\hlcom{# here is a control model that specifies to use repeated 10-fold cross validation}
+\hlstd{ctrl} \hlkwb{<-} \hlkwd{trainControl}\hlstd{(}\hlkwc{method} \hlstd{=} \hlstr{'cv'}\hlstd{,}
+                     \hlkwc{number} \hlstd{=} \hlnum{10}
+                     \hlstd{)}
+
+\hlcom{# we train the model on the training data and with the labeling data as a guide}
+\hlstd{fitnn} \hlkwb{<-} \hlkwd{train}\hlstd{( training, training}\hlopt{$}\hlstd{labels,}
+              \hlkwc{method} \hlstd{=} \hlstr{"nnet"}\hlstd{,} \hlcom{# uses the 'nnet' package as a backend}
+              \hlkwc{algorithm} \hlstd{=} \hlstr{'backprop'}\hlstd{,}
+              \hlkwc{learningrate} \hlstd{=} \hlnum{0.2}\hlstd{,}
+              \hlkwc{trControl} \hlstd{= ctrl,}
+              \hlkwc{linout} \hlstd{=} \hlnum{FALSE}\hlstd{,}
+              \hlkwc{MaxNWts} \hlstd{=} \hlnum{15000}\hlstd{,}
+              \hlkwc{maxit} \hlstd{=} \hlnum{100}\hlstd{,}
+              \hlkwc{hidden} \hlstd{=} \hlnum{10}\hlstd{)}
+\hlcom{## many pages of printing supressed}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlcom{#shows the confusion matrix}
+\hlkwd{confusionMatrix}\hlstd{(fitnn)}
+\end{alltt}
+\begin{verbatim}
+## Cross-Validated (10 fold) Confusion Matrix 
+## 
+## (entries are percentages of table totals)
+##  
+##           Reference
+## Prediction    0    1
+##          0 45.2  2.6
+##          1  4.8 47.4
+\end{verbatim}
+\begin{alltt}
+\hlcom{#prediction}
+\hlstd{pre} \hlkwb{<-} \hlkwd{predict}\hlstd{(fitnn,} \hlkwc{newdata} \hlstd{= testing)}
+\hlkwd{summary}\hlstd{(pre)}
+\end{alltt}
+\begin{verbatim}
+##    0    1 
+## 1226 1274
+\end{verbatim}
+\begin{alltt}
+\hlstd{a} \hlkwb{<-} \hlkwd{test.cl}\hlstd{(testing}\hlopt{$}\hlstd{labels,} \hlkwd{predict}\hlstd{(fitnn, testing))}
+\hlkwd{print}\hlstd{(a)}
+\end{alltt}
+\begin{verbatim}
+##       predicted
+## actual    0
+##      0 2500
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
 Neural network...
 
 
@@ -412,48 +292,38 @@ We use the caret (classification and regression tool) package with doMC(Parallel
 \begin{knitrout}
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 \begin{alltt}
-\hlkwd{library}\hlstd{(caret)}
-\end{alltt}
-
-
-{\ttfamily\noindent\itshape\color{messagecolor}{\#\# Loading required package: lattice}}\begin{alltt}
 \hlkwd{library}\hlstd{(doMC)}
-\end{alltt}
-
-
-{\ttfamily\noindent\itshape\color{messagecolor}{\#\# Loading required package: foreach\\\#\# Loading required package: iterators\\\#\# Loading required package: parallel}}\begin{alltt}
-\hlcom{# class labels don't need to be dummy coded like they did for the aNN}
-\hlstd{data_svm} \hlkwb{<-} \hlstd{data}
-\hlstd{labels} \hlkwb{<-} \hlkwd{c}\hlstd{(}\hlkwd{rep}\hlstd{(}\hlnum{0}\hlstd{,}\hlnum{5000}\hlstd{),} \hlkwd{rep}\hlstd{(}\hlnum{1}\hlstd{,}\hlnum{5000}\hlstd{))}
-\hlstd{data_svm}\hlopt{$}\hlstd{labels} \hlkwb{<-} \hlstd{labels}
-\hlstd{data_svm}\hlopt{$}\hlstd{labels} \hlkwb{<-} \hlkwd{as.factor}\hlstd{(data_svm}\hlopt{$}\hlstd{labels)}
-
+\hlcom{# sets multiple cores to help run the svm}
+\hlkwd{registerDoMC}\hlstd{(}\hlnum{2}\hlstd{)}
 \hlcom{# subsetting into train and test sets.}
-\hlstd{index} \hlkwb{<-} \hlnum{1}\hlopt{:}\hlkwd{nrow}\hlstd{(data_svm)}
+\hlstd{index} \hlkwb{<-} \hlnum{1}\hlopt{:}\hlkwd{nrow}\hlstd{(data)}
 \hlstd{testindex} \hlkwb{<-} \hlkwd{sample}\hlstd{(index,} \hlkwd{trunc}\hlstd{(}\hlkwd{length}\hlstd{(index)}\hlopt{*}\hlnum{30}\hlopt{/}\hlnum{100}\hlstd{))}
-\hlstd{testset} \hlkwb{<-} \hlstd{data_svm[testindex,]}
-\hlstd{trainset} \hlkwb{<-} \hlstd{data_svm[}\hlopt{-}\hlstd{testindex,]}
+\hlstd{testset} \hlkwb{<-} \hlstd{data[testindex,]}
+\hlstd{trainset} \hlkwb{<-} \hlstd{data[}\hlopt{-}\hlstd{testindex,]}
 
 \hlcom{# training the model with a radial basis function.}
 \hlcom{# uses the lables ~ . to say 'the class labels are defined in the varible}
 \hlcom{# 'labels'. 10-fold cross validation is performed in the model and reported later and}
 \hlcom{# doesn't need to be done by hand.}
 \hlkwd{system.time}\hlstd{(}
-  \hlstd{model} \hlkwb{<-} \hlkwd{train}\hlstd{(labels} \hlopt{~} \hlstd{.,}
+  \hlstd{fitsvm} \hlkwb{<-} \hlkwd{train}\hlstd{(labels} \hlopt{~} \hlstd{.,}
                  \hlkwc{data} \hlstd{= trainset,}
                  \hlkwc{method}\hlstd{=}\hlstr{"svmRadial"}\hlstd{,}
                  \hlkwc{trControl}\hlstd{=}\hlkwd{trainControl}\hlstd{(}\hlkwc{method}\hlstd{=}\hlstr{'cv'}\hlstd{,} \hlkwc{number} \hlstd{=} \hlnum{10}\hlstd{)}
                  \hlstd{)}
 \hlstd{)}
 \end{alltt}
-
-
-{\ttfamily\noindent\itshape\color{messagecolor}{\#\# Loading required package: kernlab}}\begin{verbatim}
+\begin{verbatim}
 ##    user  system elapsed 
-## 1108.72   10.25 1123.19
+## 789.785   7.378 915.254
 \end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 \begin{alltt}
-\hlkwd{print}\hlstd{(model)}
+\hlkwd{print}\hlstd{(fitsvm)}
 \end{alltt}
 \begin{verbatim}
 ## Support Vector Machines with Radial Basis Function Kernel 
@@ -465,25 +335,25 @@ We use the caret (classification and regression tool) package with doMC(Parallel
 ## No pre-processing
 ## Resampling: Cross-Validated (10 fold) 
 ## 
-## Summary of sample sizes: 6300, 6299, 6300, 6301, 6301, 6300, ... 
+## Summary of sample sizes: 6300, 6300, 6301, 6300, 6300, 6300, ... 
 ## 
 ## Resampling results across tuning parameters:
 ## 
 ##   C    Accuracy  Kappa  Accuracy SD  Kappa SD
-##   0.2  1         1      5e-04        9e-04   
-##   0.5  1         1      5e-04        9e-04   
+##   0.2  1         1      1e-03        2e-03   
+##   0.5  1         1      0e+00        0e+00   
 ##   1.0  1         1      5e-04        9e-04   
 ## 
-## Tuning parameter 'sigma' was held constant at a value of 0.0005534
+## Tuning parameter 'sigma' was held constant at a value of 0.0005525
 ## Accuracy was used to select the optimal model using  the largest value.
-## The final values used for the model were sigma = 0.0005534 and C = 0.25.
+## The final values used for the model were sigma = 0.0005525 and C = 0.5.
 \end{verbatim}
 \begin{alltt}
 \hlcom{# prediction.}
-\hlstd{prediction} \hlkwb{<-} \hlkwd{predict}\hlstd{(model, testset[,}\hlopt{-}\hlnum{1001}\hlstd{])}
+\hlstd{prediction} \hlkwb{<-} \hlkwd{predict}\hlstd{(fitsvm, testset[,}\hlopt{-}\hlnum{1001}\hlstd{])}
 \hlstd{tab} \hlkwb{<-} \hlkwd{table}\hlstd{(}\hlkwc{pred} \hlstd{= prediction,} \hlkwc{true} \hlstd{= testset}\hlopt{$}\hlstd{labels)}
-\hlkwd{plot}\hlstd{(model)}
-\hlkwd{confusionMatrix}\hlstd{(model)}
+\hlkwd{plot}\hlstd{(fitsvm)}
+\hlkwd{confusionMatrix}\hlstd{(fitsvm)}
 \end{alltt}
 \begin{verbatim}
 ## Cross-Validated (10 fold) Confusion Matrix 
@@ -492,8 +362,8 @@ We use the caret (classification and regression tool) package with doMC(Parallel
 ##  
 ##           Reference
 ## Prediction    0    1
-##          0 50.2  0.0
-##          1  0.0 49.7
+##          0 49.6  0.0
+##          1  0.0 50.4
 \end{verbatim}
 \begin{alltt}
 \hlkwd{print}\hlstd{(tab)}
@@ -501,8 +371,8 @@ We use the caret (classification and regression tool) package with doMC(Parallel
 \begin{verbatim}
 ##     true
 ## pred    0    1
-##    0 1482    0
-##    1    0 1518
+##    0 1529    0
+##    1    0 1471
 \end{verbatim}
 \begin{alltt}
 \hlcom{# model accuracy}
@@ -513,7 +383,7 @@ We use the caret (classification and regression tool) package with doMC(Parallel
 \end{verbatim}
 \end{kframe}
 
-{\centering \includegraphics[width=.45\linewidth]{figure/minimal-svm} 
+{\centering \includegraphics[width=.45\linewidth]{figure/minimal-svm1_print} 
 
 }
 
@@ -522,10 +392,13 @@ We use the caret (classification and regression tool) package with doMC(Parallel
 \end{knitrout}
 
 
-
+\section{Scrambled data}
+Here we assign the classes according to the assignment rubric, divided in chunks of 500.
 \begin{knitrout}
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 \begin{alltt}
+\hlstd{data_copy} \hlkwb{<-} \hlstd{data}
+
 \hlstd{labels} \hlkwb{<-} \hlkwd{c}\hlstd{(}
   \hlkwd{rep}\hlstd{(}\hlstr{'0'}\hlstd{,}\hlnum{500}\hlstd{),}
         \hlkwd{rep}\hlstd{(}\hlstr{'1'}\hlstd{,}\hlnum{500}\hlstd{),}
@@ -549,12 +422,183 @@ We use the caret (classification and regression tool) package with doMC(Parallel
         \hlkwd{rep}\hlstd{(}\hlstr{'1'}\hlstd{,}\hlnum{500}\hlstd{)}
 \hlstd{)}
 
-\hlstd{targets} \hlkwb{<-} \hlkwd{class.ind}\hlstd{(}\hlkwd{c}\hlstd{(}\hlkwd{rep}\hlstd{(}\hlstr{'0'}\hlstd{,} \hlnum{5000}\hlstd{),} \hlkwd{rep}\hlstd{(}\hlstr{'1'}\hlstd{,}\hlnum{5000}\hlstd{)))}
+\hlstd{data_copy}\hlopt{$}\hlstd{labels} \hlkwb{<-} \hlkwd{as.factor}\hlstd{(labels)}
+\hlkwd{is.factor}\hlstd{(data_copy}\hlopt{$}\hlstd{labels)}
+\end{alltt}
+\begin{verbatim}
+## [1] TRUE
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+\subsection{Neural Network, again}
+
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{inTrain} \hlkwb{<-} \hlkwd{createDataPartition}\hlstd{(}\hlkwc{y} \hlstd{= data_copy}\hlopt{$}\hlstd{labels,} \hlkwc{p}\hlstd{=}\hlnum{.71}\hlstd{,} \hlkwc{list}\hlstd{=}\hlnum{FALSE}\hlstd{)}
+\hlstd{training} \hlkwb{<-} \hlstd{data_copy[inTrain,]}
+\hlstd{testing} \hlkwb{<-} \hlstd{data_copy[}\hlopt{-}\hlstd{inTrain,]}
+
+\hlstd{ctrl} \hlkwb{<-} \hlkwd{trainControl}\hlstd{(}\hlkwc{method} \hlstd{=} \hlstr{'repeatedcv'}\hlstd{,}
+                     \hlkwc{number} \hlstd{=} \hlnum{10}
+                     \hlstd{)}
+
+\hlkwd{is.factor}\hlstd{(training}\hlopt{$}\hlstd{labels)}
+\hlstd{fitnn2} \hlkwb{<-} \hlkwd{train}\hlstd{( training, training}\hlopt{$}\hlstd{labels,}
+              \hlkwc{method} \hlstd{=} \hlstr{"nnet"}\hlstd{,}
+              \hlkwc{algorithm} \hlstd{=} \hlstr{'backprop'}\hlstd{,}
+              \hlkwc{learningrate} \hlstd{=} \hlnum{0.1}\hlstd{,}
+              \hlkwc{trControl} \hlstd{= ctrl,}
+              \hlkwc{linout} \hlstd{=} \hlnum{FALSE}\hlstd{,}
+              \hlcom{## this was the important thing to pass to nnet}
+              \hlkwc{MaxNWts} \hlstd{=} \hlnum{15000}\hlstd{)}
+
+\hlcom{## many pages of printing output is supressed here}
 \end{alltt}
 \end{kframe}
 \end{knitrout}
 
 
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{confusionMatrix}\hlstd{(fitnn2)}
+\end{alltt}
+\begin{verbatim}
+## Cross-Validated (10 fold, repeated 1 times) Confusion Matrix 
+## 
+## (entries are percentages of table totals)
+##  
+##           Reference
+## Prediction    0    1
+##          0 46.2  2.8
+##          1  3.8 47.2
+\end{verbatim}
+\begin{alltt}
+\hlcom{#prediction}
+\hlstd{pre} \hlkwb{<-} \hlkwd{predict}\hlstd{(fitnn2,} \hlkwc{newdata} \hlstd{= testing)}
+\hlkwd{summary}\hlstd{(pre)}
+\end{alltt}
+\begin{verbatim}
+##    0    1 
+## 1445 1455
+\end{verbatim}
+\begin{alltt}
+\hlstd{a} \hlkwb{<-} \hlkwd{test.cl}\hlstd{(testing}\hlopt{$}\hlstd{labels,} \hlkwd{predict}\hlstd{(fitnn2, testing))}
+\hlkwd{print}\hlstd{(a)}
+\end{alltt}
+\begin{verbatim}
+##       predicted
+## actual    0
+##      0 2900
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+
+\subsection{SVM, again}
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlcom{# subsetting into train and test sets.}
+\hlstd{index} \hlkwb{<-} \hlnum{1}\hlopt{:}\hlkwd{nrow}\hlstd{(data_copy)}
+\hlstd{testindex} \hlkwb{<-} \hlkwd{sample}\hlstd{(index,} \hlkwd{trunc}\hlstd{(}\hlkwd{length}\hlstd{(index)}\hlopt{*}\hlnum{30}\hlopt{/}\hlnum{100}\hlstd{))}
+\hlstd{testset} \hlkwb{<-} \hlstd{data_copy[testindex,]}
+\hlstd{trainset} \hlkwb{<-} \hlstd{data_copy[}\hlopt{-}\hlstd{testindex,]}
+
+\hlcom{# training the model with a radial basis function.}
+\hlcom{# uses the lables ~ . to say 'the class labels are defined in the varible}
+\hlcom{# 'labels'. 10-fold cross validation is performed in the model and reported later and}
+\hlcom{# doesn't need to be done by hand.}
+\hlkwd{system.time}\hlstd{(}
+  \hlstd{model} \hlkwb{<-} \hlkwd{train}\hlstd{(labels} \hlopt{~} \hlstd{.,}
+                 \hlkwc{data} \hlstd{= trainset,}
+                 \hlkwc{method}\hlstd{=}\hlstr{"svmRadial"}\hlstd{,}
+                 \hlkwc{trControl}\hlstd{=}\hlkwd{trainControl}\hlstd{(}\hlkwc{method}\hlstd{=}\hlstr{'cv'}\hlstd{,} \hlkwc{number} \hlstd{=} \hlnum{10}\hlstd{)}
+                 \hlstd{)}
+\hlstd{)}
+\end{alltt}
+
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# Loading required package: kernlab}}\begin{verbatim}
+##    user  system elapsed 
+## 4286.61   27.85 4347.85
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{print}\hlstd{(model)}
+\end{alltt}
+\begin{verbatim}
+## Support Vector Machines with Radial Basis Function Kernel 
+## 
+## 7000 samples
+## 1000 predictors
+##    2 classes: '0', '1' 
+## 
+## No pre-processing
+## Resampling: Cross-Validated (10 fold) 
+## 
+## Summary of sample sizes: 6299, 6300, 6300, 6300, 6300, 6300, ... 
+## 
+## Resampling results across tuning parameters:
+## 
+##   C    Accuracy  Kappa  Accuracy SD  Kappa SD
+##   0.2  0.5       -0.01  0.007        0.01    
+##   0.5  0.5       -0.02  0.017        0.03    
+##   1.0  0.5       -0.02  0.015        0.03    
+## 
+## Tuning parameter 'sigma' was held constant at a value of 0.0005511
+## Accuracy was used to select the optimal model using  the largest value.
+## The final values used for the model were sigma = 0.0005511 and C = 0.25.
+\end{verbatim}
+\begin{alltt}
+\hlcom{# prediction.}
+\hlstd{prediction} \hlkwb{<-} \hlkwd{predict}\hlstd{(model, testset[,}\hlopt{-}\hlnum{1001}\hlstd{])}
+\hlstd{tab} \hlkwb{<-} \hlkwd{table}\hlstd{(}\hlkwc{pred} \hlstd{= prediction,} \hlkwc{true} \hlstd{= testset}\hlopt{$}\hlstd{labels)}
+\hlkwd{plot}\hlstd{(model)}
+\hlkwd{confusionMatrix}\hlstd{(model)}
+\end{alltt}
+\begin{verbatim}
+## Cross-Validated (10 fold) Confusion Matrix 
+## 
+## (entries are percentages of table totals)
+##  
+##           Reference
+## Prediction    0    1
+##          0  4.1  4.9
+##          1 45.3 45.6
+\end{verbatim}
+\begin{alltt}
+\hlkwd{print}\hlstd{(tab)}
+\end{alltt}
+\begin{verbatim}
+##     true
+## pred    0    1
+##    0  153  154
+##    1 1386 1307
+\end{verbatim}
+\begin{alltt}
+\hlcom{# model accuracy}
+\hlkwd{print}\hlstd{(}\hlnum{1}\hlopt{-}\hlstd{(tab[}\hlnum{1}\hlstd{,}\hlnum{2}\hlstd{]}\hlopt{+}\hlstd{tab[}\hlnum{2}\hlstd{,}\hlnum{1}\hlstd{])} \hlopt{/} \hlstd{(tab[}\hlnum{1}\hlstd{,}\hlnum{1}\hlstd{]}\hlopt{+}\hlstd{tab[}\hlnum{2}\hlstd{,}\hlnum{2}\hlstd{]))}
+\end{alltt}
+\begin{verbatim}
+## [1] -0.05479
+\end{verbatim}
+\end{kframe}
+
+{\centering \includegraphics[width=.45\linewidth]{figure/minimal-svm2print} 
+
+}
+
+
+
+\end{knitrout}
 
 
 \end{document}

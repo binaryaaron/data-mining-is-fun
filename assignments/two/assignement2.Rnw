@@ -29,7 +29,7 @@
 \chead{\leftmark}
 \rhead{}
 \lfoot{Aaron Gonzales; Data Mining}
-\cfoot{Homework 13}
+\cfoot{Assignment 2}
 \rfoot{Page \thepage\ of \pageref{LastPage}}
 
 \begin{document}
@@ -50,7 +50,7 @@ theme_set(theme_bw())
 
 
 
-\section{Neural Network}
+\section{Regular data}
 
 Reading the data, optimizing for speed:
 <<readdata, cache=TRUE>>=
@@ -62,12 +62,18 @@ data <- read.table("~/Dropbox/cs/datamining/data-mining-is-fun/assignments/two/d
 \subsection {}
 
 Using the nnet package and a small function to tabulate our predictions.
-<<Functions>>=
+<<Functions, cache=FALSE>>=
 library(nnet)
+library(caret)
+library(pROC)
 nrow(data)
 #Define class 'labels' for our set.
 targets <- class.ind(c(rep('0', 5000), rep('1',5000)))
-#test_data <- smalldata[sample(nrow(smalldata), 5000),]
+labels <- c(rep(0,5000), rep(1,5000))
+data$labels <- labels
+data$labels <- as.factor(data$labels)
+
+# small function to show predicted results
 test.cl <- function(true, pred) {
     actual <- max.col(true) - 1
     predicted <- max.col(pred) - 1
@@ -76,100 +82,131 @@ test.cl <- function(true, pred) {
 }
 @
 
+<<nn_small, cache=TRUE, results='hide'>>=
+# caret has many functions to help chop up data, here we partition the data
+# into a test and training set
+library(doMC)
+# sets multiple cores to help run the svm
+registerDoMC(2)
+data_small <- subset(data, select=c(V1, V2, V3, V4, labels))
+inTrain <- createDataPartition(y = data_small$labels, p=.75, list=FALSE)
+training <- data_small[inTrain,]
+testing <- data_small[-inTrain,]
 
-<<testSmallNN, cache=TRUE>>=
-smalldata <- subset(data, select = c(V1,V2, V3, V4))
-targets <- class.ind(c(rep('0', 5000), rep('1',5000)))
-#test_data <- smalldata[sample(nrow(smalldata), 5000),]
-accuracy_rate <- NULL
-for (i in 1:2) {
-  train <- c(sample(1:5000, 450), sample(5000:10000,450))
-  neural_net <- nnet(smalldata[train,], targets[train,], size=10, rang = 0.1, maxit =200, MaxNWts = 26000)
-  a <- test.cl(targets[-train,], predict(neural_net, smalldata[-train,]))
-  print(a)
-  # error rate
-  accuracy_rate[i] = 1-(a[1,2]+a[2,1]) / (a[1,1]+a[2,2])
-  print("finished run ")
-}
-accuracy_rate
-mean(accuracy_rate)
+# here is a control model that specifies to use repeated 10-fold cross validation
+ctrl <- trainControl(method = 'repeatedcv',
+                     number = 10
+                     )
+
+# we train the model on the training data and with the labeling data as a guide
+fitsmall <- train( training, training$labels,
+              method = "nnet", # uses the 'nnet' package as a backend
+              algorithm = 'backprop',
+              learningrate = 0.1,
+              trControl = ctrl,
+              linout = FALSE,
+              MaxNWts = 15000)
+## many pages of printing supressed
+@
+
+<<test>>=
+tc <- trainControl(method = 'boot', number = 25)
+train(Species~., data=iris, method = 'nnet',trControl=tc)
+@
+
+<<nn1small_print>>=
+#shows the confusion matrix
+confusionMatrix(fitsmall)
+#prediction
+smallpre <- predict(fitsmall, newdata = testing)
+summary(smallpre)
+a <- test.cl(testing$labels, predict(fitsmall, testing))
+print(a)
 
 @
 
 
+<<nn1, cache=TRUE, results='hide', eval=TRUE>>=
+# caret has many functions to help chop up data, here we partition the data
+# into a test and training set
+inTrain <- createDataPartition(y = data$labels, p=.75, list=FALSE)
+training <- data[inTrain,]
+testing <- data[-inTrain,]
 
-<<fullNN1, cache=TRUE, eval=TRUE>>=
-# Vector for accuracy rate on each run
-accuracy_rate <- NULL
-# train the network 10 times on 90 percent of each sample
-for (i in 1:10) {
-  # train is made from sampling at random from each half of the
-  # data
-  train <- c(sample(1:5000, 4500), sample(5000:10000,4500))
-  neural_net <- nnet(data[train,], targets[train,],
-                     size=10,
-                     rang = 0.1,
-                     maxit =100,
-                     MaxNWts = 26000)
-  # hold values in table and print them
-  # tests prediction with the non-sampled remnants of the data
-  a <- test.cl(targets[-train,], predict(neural_net, data[-train,]))
-  print(a)
-  # error rate
-  accuracy_rate[i] = 1-(a[1,2]+a[2,1]) / (a[1,1]+a[2,2])
-  print("finished run ")
-}
-# prints vector of rates
-accuracy_rate
-# mean of the accuracy rate
-mean(accuracy_rate)
+# here is a control model that specifies to use repeated 10-fold cross validation
+ctrl <- trainControl(method = 'cv',
+                     number = 10
+                     )
+
+# we train the model on the training data and with the labeling data as a guide
+fitnn <- train( training, training$labels,
+              method = "nnet", # uses the 'nnet' package as a backend
+              algorithm = 'backprop',
+              learningrate = 0.2,
+              trControl = ctrl,
+              linout = FALSE,
+              MaxNWts = 15000,
+              maxit = 100,
+              hidden = 10)
+## many pages of printing supressed
 @
 
+<<nn1again>>=
+#shows the confusion matrix
+confusionMatrix(fitnn)
+#prediction
+pre <- predict(fitnn, newdata = testing)
+summary(pre)
+a <- test.cl(testing$labels, predict(fitnn, testing))
+print(a)
+
+@
 Neural network...
 
 
 We use the caret (classification and regression tool) package with doMC(Parallelization for R) to train an svm (libsvm package) with a radial basis function.
 
-<<svm, cache=TRUE>>=
-library(caret)
+<<svm1, cache=TRUE, eval=TRUE>>=
 library(doMC)
-# class labels don't need to be dummy coded like they did for the aNN
-data_svm <- data
-labels <- c(rep(0,5000), rep(1,5000))
-data_svm$labels <- labels
-data_svm$labels <- as.factor(data_svm$labels)
-
+# sets multiple cores to help run the svm
+registerDoMC(2)
 # subsetting into train and test sets.
-index <- 1:nrow(data_svm)
+index <- 1:nrow(data)
 testindex <- sample(index, trunc(length(index)*30/100))
-testset <- data_svm[testindex,]
-trainset <- data_svm[-testindex,]
+testset <- data[testindex,]
+trainset <- data[-testindex,]
 
 # training the model with a radial basis function.
 # uses the lables ~ . to say 'the class labels are defined in the varible
 # 'labels'. 10-fold cross validation is performed in the model and reported later and
 # doesn't need to be done by hand.
 system.time(
-  model <- train(labels ~ .,
+  fitsvm <- train(labels ~ .,
                  data = trainset,
                  method="svmRadial",
                  trControl=trainControl(method='cv', number = 10)
                  )
 )
-print(model)
+@
+
+<<svm1_print>>=
+print(fitsvm)
 # prediction.
-prediction <- predict(model, testset[,-1001])
+prediction <- predict(fitsvm, testset[,-1001])
 tab <- table(pred = prediction, true = testset$labels)
-plot(model)
-confusionMatrix(model)
+plot(fitsvm)
+confusionMatrix(fitsvm)
 print(tab)
 # model accuracy
 print(1-(tab[1,2]+tab[2,1]) / (tab[1,1]+tab[2,2]))
 @
 
 
+\section{Scrambled data}
+Here we assign the classes according to the assignment rubric, divided in chunks of 500.
+<<labels>>=
+data_copy <- data
 
-<<pca2>>=
 labels <- c(
   rep('0',500),
 	rep('1',500),
@@ -193,50 +230,79 @@ labels <- c(
 	rep('1',500)
 )
 
-targets <- class.ind(c(
-  rep('0',500),
-  rep('1',500),
-	rep('0',500),
-	rep('1',500),
-	rep('0',500),
-	rep('1',500),
-	rep('0',500),
-	rep('1',500),
-	rep('0',500),
-	rep('1',500),
-	rep('0',500),
-	rep('1',500),
-	rep('0',500),
-	rep('1',500),
-	rep('0',500),
-	rep('1',500),
-	rep('0',500),
-	rep('1',500),
-	rep('0',500),
-	rep('1',500)
-  )
+data_copy$labels <- as.factor(labels)
+is.factor(data_copy$labels)
+@
+
+\subsection{Neural Network, again}
+
+
+<<nn2, cache=TRUE, echo=TRUE, results='hide'>>=
+inTrain <- createDataPartition(y = data_copy$labels, p=.71, list=FALSE)
+training <- data_copy[inTrain,]
+testing <- data_copy[-inTrain,]
+
+ctrl <- trainControl(method = 'repeatedcv',
+                     number = 10
+                     )
+
+is.factor(training$labels)
+fitnn2 <- train( training, training$labels,
+              method = "nnet",
+              algorithm = 'backprop',
+              learningrate = 0.1,
+              trControl = ctrl,
+              linout = FALSE,
+              ## this was the important thing to pass to nnet
+              MaxNWts = 15000)
+
+## many pages of printing output is supressed here
+@
+
+
+<<nn2print>>=
+confusionMatrix(fitnn2)
+#prediction
+pre <- predict(fitnn2, newdata = testing)
+summary(pre)
+a <- test.cl(testing$labels, predict(fitnn2, testing))
+print(a)
+@
+
+
+\subsection{SVM, again}
+<<svm2, cache=TRUE, eval=TRUE>>=
+
+# subsetting into train and test sets.
+index <- 1:nrow(data_copy)
+testindex <- sample(index, trunc(length(index)*30/100))
+testset <- data_copy[testindex,]
+trainset <- data_copy[-testindex,]
+
+# training the model with a radial basis function.
+# uses the lables ~ . to say 'the class labels are defined in the varible
+# 'labels'. 10-fold cross validation is performed in the model and reported later and
+# doesn't need to be done by hand.
+system.time(
+  model <- train(labels ~ .,
+                 data = trainset,
+                 method="svmRadial",
+                 trControl=trainControl(method='cv', number = 10)
+                 )
 )
-
 @
 
-<<nn2>>=
-smalldata <- subset(data, select = c(V1,V2, V3, V4))
-#test_data <- smalldata[sample(nrow(smalldata), 5000),]
-accuracy_rate <- NULL
-for (i in 1:2) {
-  train <- c(sample(1:5000, 450), sample(5000:10000,450))
-  neural_net <- nnet(smalldata[train,], targets[train,], size=10, rang = 0.1, maxit =200, MaxNWts = 26000)
-  a <- test.cl(targets[-train,], predict(neural_net, smalldata[-train,]))
-  print(a)
-  # error rate
-  accuracy_rate[i] = 1-(a[1,2]+a[2,1]) / (a[1,1]+a[2,2])
-  print("finished run ")
-}
-accuracy_rate
-mean(accuracy_rate)
-
+<<svm2print>>=
+print(model)
+# prediction.
+prediction <- predict(model, testset[,-1001])
+tab <- table(pred = prediction, true = testset$labels)
+plot(model)
+confusionMatrix(model)
+print(tab)
+# model accuracy
+print(1-(tab[1,2]+tab[2,1]) / (tab[1,1]+tab[2,2]))
 @
-
 
 
 \end{document}
