@@ -1,0 +1,126 @@
+%%%%%latex preamble%%%%%
+
+\documentclass{article}
+%% maxwidth is the original width if it is less than linewidth
+%% otherwise use linewidth (to make sure the graphics do not exceed the margin)
+\usepackage{alltt}
+\usepackage[sc]{mathpazo}
+\usepackage{amsmath, amsthm, amssymb}
+\usepackage{graphicx}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+%\geometry{verbose,tmargin=2.5cm,bmargin=2.5cm,lmargin=1.5cm,rmargin=1.5cm}
+\setcounter{secnumdepth}{2}
+\setcounter{tocdepth}{2}
+\usepackage{url}
+\usepackage[unicode=true,pdfusetitle,
+  bookmarks=true,bookmarksnumbered=true,bookmarksopen=true,bookmarksopenlevel=2,
+breaklinks=false,pdfborder={0 0 1},backref=false,colorlinks=false]
+{hyperref}
+\hypersetup{pdfstartview={XYZ null null 1}}
+\usepackage{float}
+\usepackage{bm}
+\usepackage{tikz}
+ %changes default sectioning commands 
+%\usepackage{breakurl}
+\renewcommand{\thesubsection}{(\alph{subsection})}
+\renewcommand{\thesubsubsection}{\roman{subsection}.}
+\usepackage{lastpage}
+\usepackage{listings}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\lhead{}
+\chead{\leftmark}
+\rhead{}
+\lfoot{Aaron Gonzales; Data Mining}
+\cfoot{Homework 4}
+\rfoot{Page \thepage\ of \pageref{LastPage}}
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+
+\begin{document}
+
+\title{Homework 4, Data Mining, Fall 2014}
+\author{Aaron Gonzales}
+\maketitle
+
+
+\section{Hierarchical Clustering}
+\begin{quote}
+  \textbf{What are the time complexites of Hierarchical clustering when we use
+  the following three methods to merge clusters?} 
+\end{quote}
+
+\subsection{Single:}
+Single linkage clustering is $O(n^2)$, mainly bound by computing the distance
+matrix which takes at minimum $\Omega(n^2)$.
+
+\subsection{Average:}
+$O(n^2)$, again - the most costly step is computing the disimilarity matrix,
+though this method would have extra time spent calculating the distances in
+each matrix that is supressed by the $O$ notation.
+
+\subsection{Max:}
+$O(n^2)$, again - the only difference between this method and single-linkage is
+changing the heuristic to ``max'' instead of ``min'' distance. 
+  
+Note that every one of these clustering algorithms must examine each item in
+the distance matrix, giving a lower bound of $\Omega(n^2)$.
+  
+
+\section{Outliers}
+\begin{quote}
+ \textbf{ Let us assume an outlier detection algorithm that finds the point with the
+  largest nearest neighbor distance as the outlier.}
+\end{quote}
+\subsection{Write a pseudo-code for this algorithm.}
+ 
+\begin{lstlisting}
+  biggestneighbor = null
+  for item in data:
+    nearest_neighbor = nearest neighbor of item
+    if distance(nearest_neighbor) > biggestneighbor:
+      biggestneighbor = item
+  return biggestneighbor
+\end{lstlisting}
+The algorithm keeps track of the item with the largest nearest neighbor
+distance and returns the point with the largest NN distance upon completion. 
+
+
+\subsection{What is the complexity of the algorithm? Can you improve it?}
+$n^2d$, where $d= \text{ dimensionality of the problem}$ and $O(1)$ space. It
+requires one full pass over the data and needs to compute the nearest neighbors
+at each point. We can improve this simple implemenation by storing our
+dataset in a self-balancing $k$-d tree in and then
+the nearest neighbor search would be $O(log\, n)$ time, bringing the
+algorithm's complexity to $O(n\, log\,n)$ (given the data in the structure -
+this wouldn't be efficient for a one-time detection, but would be efficient if
+you were add data to the set and try to detect new outliers, though this is
+problematic as it requires $O(n)$ extra space, and as our problem grows in
+size, locality-sensitive hashing for approximate nearest neighbor search can
+make the problem more feasible. 
+
+
+ \subsection{ Write a pseudo-code of an algorithm that outputs the top-K points
+ in descending order of their nearest neighbor distance? What is the complexity
+ of your algorithm?}
+\begin{lstlisting}
+find_k_outliers(int k):
+  biggestneighbors = maxHeap()
+  for item in data:
+    nearest_neighbor = nearest neighbor of item
+      biggestneighbors.add(nearest_neighbor)
+  return top k items in biggestneighbors
+\end{lstlisting}
+  
+  The algorithm is nearly identical to the above algorithm. It uses a max
+  fibonacci heap which supports contant time max-key lookups and general insertions. 
+  It allows for the same running time as the above algorithm $O(n^2d)$ thanks to the
+  constant time insertions, though would be inefficient for very large data
+  sets due to the $O(n)$ extra space.   
+  
+  
+  
+  
+  
+  
+\end{document}
