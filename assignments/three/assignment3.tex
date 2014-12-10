@@ -1,0 +1,167 @@
+%%%%%latex preamble%%%%%
+\documentclass[titlepage]{article}\usepackage[]{graphicx}\usepackage[]{color}
+%% maxwidth is the original width if it is less than linewidth
+%% otherwise use linewidth (to make sure the graphics do not exceed the margin)
+\makeatletter
+\def\maxwidth{ %
+  \ifdim\Gin@nat@width>\linewidth
+  \linewidth
+  \else
+  \Gin@nat@width
+  \fi
+}
+\makeatother
+
+
+\usepackage{minted}
+\usepackage{listings}
+\definecolor{bg}{rgb}{0.95,0.95,0.95}
+\definecolor{mygreen}{rgb}{0,0.6,0}
+\definecolor{mygray}{rgb}{0.5,0.5,0.5}
+\definecolor{mymauve}{rgb}{0.58,0,0.82}
+\lstset{ %
+  backgroundcolor=\color{white},   % choose the background color; you must add \usepackage{color} or \usepackage{xcolor}
+  basicstyle=\footnotesize,        % the size of the fonts that are used for the code
+  breakatwhitespace=false,         % sets if automatic breaks should only happen at whitespace
+  breaklines=true,                 % sets automatic line breaking
+  captionpos=b,                    % sets the caption-position to bottom
+  commentstyle=\color{mygreen},    % comment style
+  deletekeywords={...},            % if you want to delete keywords from the given language
+  escapeinside={\%*}{*)},          % if you want to add LaTeX within your code
+  extendedchars=true,              % lets you use non-ASCII characters; for 8-bits encodings only, does not work with UTF-8
+  frame=single,                    % adds a frame around the code
+  keepspaces=true,                 % keeps spaces in text, useful for keeping indentation of code (possibly needs columns=flexible)
+  keywordstyle=\color{blue},       % keyword style
+  morekeywords={*,...},            % if you want to add more keywords to the set
+  numbers=left,                    % where to put the line-numbers; possible values are (none, left, right)
+  numbersep=5pt,                   % how far the line-numbers are from the code
+  numberstyle=\tiny\color{mygray}, % the style that is used for the line-numbers
+  rulecolor=\color{black},         % if not set, the frame-color may be changed on line-breaks within not-black text (e.g. comments (green here))
+  showspaces=false,                % show spaces everywhere adding particular underscores; it overrides 'showstringspaces'
+  showstringspaces=false,          % underline spaces within strings only
+  showtabs=false,                  % show tabs within strings adding particular underscores
+  stepnumber=2,                    % the step between two line-numbers. If it's 1, each line will be numbered
+  stringstyle=\color{mymauve},     % string literal style
+  tabsize=2,                       % sets default tabsize to 2 spaces
+  title=\lstname                   % show the filename of files included with \lstinputlisting; also try caption instead of title
+}
+\usepackage{alltt}
+\usepackage[sc]{mathpazo}
+\usepackage{amsmath, amsthm, amssymb}
+\usepackage{graphicx}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\geometry{verbose,tmargin=2.5cm,bmargin=2.5cm,lmargin=1.5cm,rmargin=1.5cm}
+\setcounter{secnumdepth}{2}
+\setcounter{tocdepth}{2}
+\usepackage{url}
+\usepackage[unicode=true,pdfusetitle,
+  bookmarks=true,bookmarksnumbered=true,bookmarksopen=true,bookmarksopenlevel=2,
+breaklinks=false,pdfborder={0 0 1},backref=false,colorlinks=false]
+{hyperref}
+\hypersetup{pdfstartview={XYZ null null 1}}
+\usepackage{float}
+\usepackage{bm}
+\usepackage{tikz}
+ %changes default sectioning commands -> 1,a, etc.
+%\usepackage{breakurl}
+\usepackage{lastpage}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+
+%%% Header and Footer %%% 
+\lhead{}
+\chead{\leftmark}
+\rhead{}
+\lfoot{Aaron Gonzales; Data Mining}
+\cfoot{Assignment 3}
+\rfoot{Page \thepage\ of \pageref{LastPage}}
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+
+\begin{document}
+
+\title{Assignment 3, CS591, Fall 2014}
+\author{Aaron Gonzales}
+\maketitle
+
+
+
+\section{Local outlier factor}
+Discussion with other classmates led to analyzing the threshold for lof as
+dictated by the assignment (2). Using the DMwR pacakge in R to run LOF on our
+dataset, we can see that a thresold of 2 excludes the entire dataset. Figure
+\ref{fig:lofscores} shows the plot of scores and Listing \ref{lst:lofr} shows
+the R output. 
+
+\begin{listing}
+  \begin{minted}[bgcolor=bg]{r}
+data <-
+read.table('/cs/datamining/data-mining-is-fun/assignments/two/data.txt',
+    header=FALSE)
+data <- scale(data)
+
+  library(DMwR)
+  lof <- lofactor(data=dat, k= 10)
+> sum(lof > 1.0)
+  [1] 8599
+> sum(lof > 1.3)
+  [1] 636
+> sum(lof > 1.31)
+  [1] 521
+> sum(lof > 1.4)
+  [1] 0
+\end{minted}
+  \label{lst:lofr}
+  \caption{R implementation of LOF}
+\end{listing}
+
+\begin{figure}
+  \label{fig:lofscores}
+  \centering
+  \includegraphics[width=0.40\linewidth]{lofscore.pdf}
+  \caption{LOF scores with k=10. No item has an LOF score higher than 1.4}
+\end{figure}
+
+\section{LOF code}
+The MATLAB code for the algorithm and analysis is below in Listings
+\ref{lst:lof} and \ref{lst:script} on page \pageref{lst:lof}; a plot showing the relationship
+between $k$ and the number of outliers is show in Figure \ref{fig:outliers} on
+page \pageref{fig:outliers}. As the number of neighbors $k$ increases, the
+number of outliers decreases, as expected. 
+
+%\lstinputlisting[language=Matlab]
+%{../../lof_ag.m} \label{lst:lof} 
+\begin{listing}
+  \inputminted[bgcolor=bg]{matlab}{../../lof_ag.m}
+\label{lst:lof}
+\caption{Local Outlier Factor function}
+\end{listing}
+
+\begin{listing}[language=Matlab]
+  \begin{minted}[bgcolor=bg]{matlab}
+k=[2 5 10 20 30 40 50 60 70 80 90 100];
+threshold=1.3;
+data=dlmread('/cs/datamining/data-mining-is-fun/assignments/two/data.txt');
+data=zscore(data);
+%% lof_ag takes data, number of neighbors to try, and a threshold LOF score 
+lof_ag(data, k, 1.3)/
+\end{minted}
+\caption{Local outlier data preparation}
+\label{lst:script}
+\end{listing}
+
+\begin{figure}
+  \label{fig:outliers}
+  \centering
+  \includegraphics[width=0.85\linewidth]{outlierplot.pdf}
+  \caption{Number of outliers vs $k$ using a threshold LOF score of 1.3}
+\end{figure}
+
+Other methods were tried to increase the speed of the algorithm, though a KD
+tree didn't seem to help much due to the high dimensionality of our data.
+Running time to process the set with the $k$ vector in Listing \ref{lst:script}
+was approximately 30 minutes, owing heavily to MATLAB's efficient $k$NN search
+functionality.
+
+
+\end{document}
